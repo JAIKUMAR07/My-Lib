@@ -14,7 +14,7 @@ const products = [
   },
 ];
 
-const UserDashboard = () => {
+const Profile = () => {
   // User getting from the storage
   const user = JSON.parse(localStorage.getItem("users"));
 
@@ -60,4 +60,4 @@ const UserDashboard = () => {
   );
 };
 
-export default UserDashboard;
+export default Profile;

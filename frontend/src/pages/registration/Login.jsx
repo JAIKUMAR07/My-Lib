@@ -1,147 +1,184 @@
-/* eslint-disable react/no-unescaped-entities */
-import { useContext, useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import myContext from "../../context/myContext";
 import toast from "react-hot-toast";
-
+import { useAuth } from "../../context/AuthContext";
 import Loader from "../../components/loader/Loader";
 
 const Login = () => {
-  const context = useContext(myContext);
-  const { loading, setLoading } = context;
-
-  // navigate
+  const { signIn, loading } = useAuth();
   const navigate = useNavigate();
 
-  // User Signup State
-  const [userLogin, setUserLogin] = useState({
+  const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
 
-  /**========================================================================
-   *                          User Login Function
-   *========================================================================**/
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const userLoginFunction = async () => {
-    // validation
-    if (userLogin.email === "" || userLogin.password === "") {
-      toast.error("All Fields are required");
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!formData.email || !formData.password) {
+      toast.error("Email and password are required");
       return;
     }
 
-    setLoading(true);
-    try {
-      // Simulate network delay
-      await new Promise((resolve) => setTimeout(resolve, 500));
+    setIsSubmitting(true);
 
-      const registeredUsers =
-        JSON.parse(localStorage.getItem("registeredUsers")) || [];
-      const user = registeredUsers.find(
-        (u) => u.email === userLogin.email && u.password === userLogin.password
-      );
+    const result = await signIn({
+      email: formData.email,
+      password: formData.password,
+    });
 
-      if (user) {
-        localStorage.setItem("users", JSON.stringify(user));
-        setUserLogin({
-          email: "",
-          password: "",
-        });
-        toast.success("Login Successfully");
-        setLoading(false);
-        if (user.role === "user") {
+    setIsSubmitting(false);
+
+    if (result.success) {
+      toast.success("Login successful!");
+
+      // Redirect based on role
+      switch (result.user.role) {
+        case "admin":
+          navigate("/admin/admin-dashboard");
+          break;
+        case "librarian":
+          navigate("/librarian/librarian-dashboard");
+          break;
+        default:
           navigate("/user-dashboard");
-        } else {
-          navigate("/admin-dashboard");
-        }
-      } else {
-        // Fallback just for testing if no users registered: allow admin if email contains 'admin'
-        if (userLogin.email.includes("admin") && registeredUsers.length === 0) {
-          const adminUser = {
-            name: "Admin User",
-            email: userLogin.email,
-            uid: "admin123",
-            role: "admin",
-            time: new Date().toISOString(),
-          };
-          localStorage.setItem("users", JSON.stringify(adminUser));
-          toast.success("Login Successfully (Admin Mode)");
-          setLoading(false);
-          navigate("/admin-dashboard");
-          return;
-        }
-
-        toast.error("Invalid Email or Password");
-        setLoading(false);
       }
-    } catch (error) {
-      console.log(error);
-      setLoading(false);
-      toast.error("Login Failed");
+    } else {
+      if (result.error && result.error.includes("Invalid login credentials")) {
+        toast.error(
+          "Login failed. Please check your credentials. If you just signed up, please verify your email address."
+        );
+      } else {
+        toast.error(result.error || "Login failed");
+      }
     }
   };
+
+  if (loading) return <Loader />;
+
   return (
-    <div className="flex justify-center items-center h-screen">
-      {loading && <Loader />}
-      {/* Login Form  */}
-      <div className="login_Form bg-gradient-to-r from-cyan-400 to-cyan-500 px-8 py-6 border border-pink-100 rounded-xl shadow-md">
-        {/* Top Heading  */}
-        <div className="mb-5">
-          <h2 className="text-center text-2xl font-bold text-white ">Login</h2>
-        </div>
-
-        {/* Input One  */}
-        <div className="mb-3">
-          <input
-            type="email"
-            name="email"
-            placeholder="Email Address"
-            value={userLogin.email}
-            onChange={(e) => {
-              setUserLogin({
-                ...userLogin,
-                email: e.target.value,
-              });
-            }}
-            className="bg-pink-50 border  px-2 py-2 w-96 rounded-md outline-none placeholder-blue-500"
-          />
-        </div>
-
-        {/* Input Two  */}
-        <div className="mb-5">
-          <input
-            type="password"
-            placeholder="Password"
-            value={userLogin.password}
-            onChange={(e) => {
-              setUserLogin({
-                ...userLogin,
-                password: e.target.value,
-              });
-            }}
-            className="bg-pink-50 border  px-2 py-2 w-96 rounded-md outline-none placeholder-blue-500"
-          />
-        </div>
-
-        {/* Signup Button  */}
-        <div className="mb-5">
-          <button
-            type="button"
-            onClick={userLoginFunction}
-            className="bg-blue-700 hover:bg-blue-800 w-full text-white text-center py-2 font-bold rounded-md "
-          >
-            Login
-          </button>
-        </div>
-
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8">
         <div>
-          <h2 className="text-black">
-            Don't Have an account{" "}
-            <Link className=" text-blue-800 font-bold" to={"/signup"}>
-              Signup
-            </Link>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            Sign in to your account
           </h2>
+          <p className="mt-2 text-center text-sm text-gray-600">
+            Or{" "}
+            <Link
+              to="/signup"
+              className="font-medium text-blue-600 hover:text-blue-500"
+            >
+              create a new account
+            </Link>
+          </p>
         </div>
+
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          <div className="rounded-md shadow-sm -space-y-px">
+            <div>
+              <label htmlFor="email" className="sr-only">
+                Email address
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                placeholder="Email address"
+                value={formData.email}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
+              />
+            </div>
+            <div>
+              <label htmlFor="password" className="sr-only">
+                Password
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                required
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                placeholder="Password"
+                value={formData.password}
+                onChange={(e) =>
+                  setFormData({ ...formData, password: e.target.value })
+                }
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <input
+                id="remember-me"
+                name="remember-me"
+                type="checkbox"
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <label
+                htmlFor="remember-me"
+                className="ml-2 block text-sm text-gray-900"
+              >
+                Remember me
+              </label>
+            </div>
+
+            <div className="text-sm">
+              <a
+                href="#"
+                className="font-medium text-blue-600 hover:text-blue-500"
+              >
+                Forgot your password?
+              </a>
+            </div>
+          </div>
+
+          <div>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSubmitting ? (
+                <span className="flex items-center">
+                  <svg
+                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  Signing in...
+                </span>
+              ) : (
+                "Sign in"
+              )}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
