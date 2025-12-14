@@ -1,20 +1,8 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import SearchBar from "../searchBar/SearchBar";
 import { useSelector } from "react-redux";
 
 const Navbar = () => {
-  // get user from localStorage
-  const user = JSON.parse(localStorage.getItem("users"));
-
-  // navigate
-  const navigate = useNavigate();
-
-  // logout function
-  const logout = () => {
-    localStorage.clear("users");
-    navigate("/login");
-  };
-
   // CartItems
   const cartItems = useSelector((state) => state.cart);
 
@@ -29,40 +17,6 @@ const Navbar = () => {
       <li>
         <Link to={"/allproduct"}>All Books</Link>
       </li>
-      {/* Signup */}
-      {!user ? (
-        <li>
-          <Link to={"/signup"}>Signup</Link>
-        </li>
-      ) : (
-        ""
-      )}
-      {/* Signup */}
-      {!user ? (
-        <li>
-          <Link to={"/login"}>Login</Link>
-        </li>
-      ) : (
-        ""
-      )}
-      {/* User */}
-      {user?.role === "user" && (
-        <li>
-          <Link to={"/user-dashboard"}>{user?.name}</Link>
-        </li>
-      )}
-      {/* Admin */}
-      {user?.role === "admin" && (
-        <li>
-          <Link to={"/admin-dashboard"}>{user?.name}</Link>
-        </li>
-      )}
-      {/* logout */}
-      {user && (
-        <li className=" cursor-pointer" onClick={logout}>
-          Logout
-        </li>
-      )}
       {/* Save */}
       <li>
         <Link to={"/cartpage"}>Save({cartItems.length})</Link>
