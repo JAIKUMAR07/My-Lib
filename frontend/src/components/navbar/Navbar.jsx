@@ -21,6 +21,22 @@ const Navbar = () => {
       <li>
         <Link to={"/cartpage"}>Save({cartItems.length})</Link>
       </li>
+
+      <li>
+        <Link to={"/bookmanagement"}>Book Management</Link>
+      </li>
+
+      <li>
+        <Link to={"/adminprofile"}>Profile</Link>
+      </li>
+
+      <li>
+        <Link to={"/studentprofile"}>Profile</Link>
+      </li>
+
+      <li>
+        <Link to={"/librarianprofile"}>Profile</Link>
+      </li>
     </ul>
   );
   return (
@@ -38,6 +54,7 @@ const Navbar = () => {
         {/* right  */}
         <div className="right flex justify-center mb-4 lg:mb-0">{navList}</div>
         {/* Search Bar  */}
+
         <SearchBar />
       </div>
     </nav>

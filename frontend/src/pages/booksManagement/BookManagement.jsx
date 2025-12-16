@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import AddBook from "./AddBook"; // Renamed import to avoid conflict
-import BookInventory from "./BookInventory";
-import EditBook from "./EditBook";
+import AddBook from "../../components/booksManagement/AddBook"; // Renamed import to avoid conflict
+import BookInventory from "../../components/booksManagement/BookInventory";
+import EditBook from "../../components/booksManagement/EditBook";
 import {
   Book,
   Plus,

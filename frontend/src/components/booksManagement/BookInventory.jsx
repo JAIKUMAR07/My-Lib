@@ -3,16 +3,12 @@ import {
   Plus,
   Minus,
   Search,
-  Filter,
   Download,
   Package,
-  AlertCircle,
-  CheckCircle,
   XCircle,
-  ChevronDown,
   MoreVertical,
-  RefreshCw,
-  BarChart3,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 const BookInventory = () => {
@@ -37,7 +33,7 @@ const BookInventory = () => {
       total_copies: 15,
       available_copies: 5,
       borrowed_copies: 10,
-      status: "low-stock",
+      status: "in-stock",
     },
     {
       id: 3,
@@ -61,10 +57,84 @@ const BookInventory = () => {
       borrowed_copies: 0,
       status: "in-stock",
     },
+    {
+      id: 5,
+      title: "Structure and Interpretation",
+      author: "Harold Abelson",
+      isbn: "978-0262510875",
+      category: "Computer Science",
+      total_copies: 10,
+      available_copies: 0,
+      borrowed_copies: 10,
+      status: "out-of-stock",
+    },
+    {
+      id: 6,
+      title: "Code Complete",
+      author: "Steve McConnell",
+      isbn: "978-0735619678",
+      category: "Software Engineering",
+      total_copies: 8,
+      available_copies: 6,
+      borrowed_copies: 2,
+      status: "in-stock",
+    },
+    {
+      id: 7,
+      title: "The Art of Computer Programming",
+      author: "Donald Knuth",
+      isbn: "978-0201896831",
+      category: "Computer Science",
+      total_copies: 5,
+      available_copies: 3,
+      borrowed_copies: 2,
+      status: "in-stock",
+    },
+    {
+      id: 8,
+      title: "Artificial Intelligence",
+      author: "Stuart Russell",
+      isbn: "978-0136042594",
+      category: "Computer Science",
+      total_copies: 15,
+      available_copies: 0,
+      borrowed_copies: 15,
+      status: "out-of-stock",
+    },
+    {
+      id: 9,
+      title: "Database Systems",
+      author: "Hector Garcia-Molina",
+      isbn: "978-0131873254",
+      category: "Database",
+      total_copies: 12,
+      available_copies: 8,
+      borrowed_copies: 4,
+      status: "in-stock",
+    },
+    {
+      id: 10,
+      title: "Computer Networks",
+      author: "Andrew Tanenbaum",
+      isbn: "978-0132126953",
+      category: "Networking",
+      total_copies: 10,
+      available_copies: 7,
+      borrowed_copies: 3,
+      status: "in-stock",
+    },
   ]);
 
   const [selectedBook, setSelectedBook] = useState(null);
   const [stockAdjustment, setStockAdjustment] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedStatus, setSelectedStatus] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const booksPerPage = 8;
+
+  // Get unique categories
+  const categories = [...new Set(books.map((book) => book.category))];
 
   const handleStockIncrease = (bookId, amount) => {
     setBooks((prev) =>
@@ -76,7 +146,7 @@ const BookInventory = () => {
             ...book,
             total_copies: newTotal,
             available_copies: newAvailable,
-            status: getStockStatus(newTotal, newAvailable),
+            status: getStockStatus(newAvailable),
           };
         }
         return book;
@@ -94,7 +164,7 @@ const BookInventory = () => {
             ...book,
             total_copies: newTotal,
             available_copies: newAvailable,
-            status: getStockStatus(newTotal, newAvailable),
+            status: getStockStatus(newAvailable),
           };
         }
         return book;
@@ -102,9 +172,8 @@ const BookInventory = () => {
     );
   };
 
-  const getStockStatus = (total, available) => {
+  const getStockStatus = (available) => {
     if (available === 0) return "out-of-stock";
-    if (available < total * 0.2) return "low-stock";
     return "in-stock";
   };
 
@@ -112,13 +181,56 @@ const BookInventory = () => {
     switch (status) {
       case "in-stock":
         return "bg-green-100 text-green-800";
-      case "low-stock":
-        return "bg-yellow-100 text-yellow-800";
       case "out-of-stock":
         return "bg-red-100 text-red-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
+  };
+
+  // Filter books
+  const filteredBooks = books.filter((book) => {
+    const matchesSearch =
+      book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      book.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      book.isbn.includes(searchQuery);
+    const matchesCategory =
+      selectedCategory === "all" || book.category === selectedCategory;
+    const matchesStatus =
+      selectedStatus === "all" || book.status === selectedStatus;
+    return matchesSearch && matchesCategory && matchesStatus;
+  });
+
+  // Pagination
+  const totalPages = Math.ceil(filteredBooks.length / booksPerPage);
+  const startIndex = (currentPage - 1) * booksPerPage;
+  const endIndex = startIndex + booksPerPage;
+  const paginatedBooks = filteredBooks.slice(startIndex, endIndex);
+
+  // Handle filter change with page reset
+  const handleFilterChange = (filterType, value) => {
+    if (filterType === "search") setSearchQuery(value);
+    if (filterType === "category") setSelectedCategory(value);
+    if (filterType === "status") setSelectedStatus(value);
+    setCurrentPage(1);
+  };
+
+  // Clear filters
+  const clearFilters = () => {
+    setSearchQuery("");
+    setSelectedCategory("all");
+    setSelectedStatus("all");
+    setCurrentPage(1);
+  };
+
+  const hasActiveFilters =
+    searchQuery !== "" ||
+    selectedCategory !== "all" ||
+    selectedStatus !== "all";
+
+  // Page navigation
+  const goToPage = (page) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
   };
 
   return (
@@ -136,27 +248,48 @@ const BookInventory = () => {
       {/* Controls */}
       <div className="bg-white rounded-xl shadow p-6 mb-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-          <div className="flex-1">
+          <div className="flex-1 w-full md:w-auto">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type="text"
+                value={searchQuery}
+                onChange={(e) => handleFilterChange("search", e.target.value)}
                 placeholder="Search books by title, author, or ISBN..."
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <select className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-              <option>All Categories</option>
-              <option>Computer Science</option>
-              <option>Mathematics</option>
-              <option>Physics</option>
+          <div className="flex items-center gap-3 flex-wrap">
+            <select
+              value={selectedCategory}
+              onChange={(e) => handleFilterChange("category", e.target.value)}
+              className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="all">All Categories</option>
+              {categories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
             </select>
-            <button className="flex items-center gap-2 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
-              <Filter className="w-4 h-4" />
-              Filter
-            </button>
+            <select
+              value={selectedStatus}
+              onChange={(e) => handleFilterChange("status", e.target.value)}
+              className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="all">All Status</option>
+              <option value="in-stock">In Stock</option>
+              <option value="out-of-stock">Out of Stock</option>
+            </select>
+            {hasActiveFilters && (
+              <button
+                onClick={clearFilters}
+                className="px-4 py-3 bg-red-50 text-red-600 border border-red-200 rounded-lg hover:bg-red-100"
+              >
+                Clear
+              </button>
+            )}
             <button className="flex items-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
               <Download className="w-4 h-4" />
               Export
@@ -183,14 +316,14 @@ const BookInventory = () => {
                 <XCircle className="w-5 h-5 text-gray-500" />
               </button>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-4">
               <div className="flex items-center gap-2">
                 <button
                   onClick={() =>
                     handleStockDecrease(selectedBook.id, stockAdjustment)
                   }
                   disabled={selectedBook.available_copies < stockAdjustment}
-                  className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
                 >
                   <Minus className="w-4 h-4" /> Decrease
                 </button>
@@ -207,13 +340,13 @@ const BookInventory = () => {
                   onClick={() =>
                     handleStockIncrease(selectedBook.id, stockAdjustment)
                   }
-                  className="px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200"
+                  className="px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 flex items-center gap-1"
                 >
                   <Plus className="w-4 h-4" /> Increase
                 </button>
               </div>
               <div className="text-sm text-gray-500">
-                <span className="font-semibold">Quick Actions:</span>
+                <span className="font-semibold">Quick:</span>
                 <button
                   onClick={() => handleStockIncrease(selectedBook.id, 1)}
                   className="ml-2 px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
@@ -263,7 +396,7 @@ const BookInventory = () => {
               </tr>
             </thead>
             <tbody>
-              {books.map((book) => (
+              {paginatedBooks.map((book) => (
                 <tr
                   key={book.id}
                   className="border-b border-gray-100 hover:bg-gray-50"
@@ -307,7 +440,11 @@ const BookInventory = () => {
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div
-                          className="bg-green-500 h-2 rounded-full"
+                          className={`h-2 rounded-full ${
+                            book.available_copies === 0
+                              ? "bg-red-500"
+                              : "bg-green-500"
+                          }`}
                           style={{
                             width: `${
                               (book.available_copies / book.total_copies) * 100
@@ -338,7 +475,95 @@ const BookInventory = () => {
               ))}
             </tbody>
           </table>
+
+          {filteredBooks.length === 0 && (
+            <div className="text-center py-12">
+              <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                No books found
+              </h3>
+              <p className="text-gray-500">
+                Try adjusting your search or filters
+              </p>
+            </div>
+          )}
         </div>
+
+        {/* Pagination */}
+        {filteredBooks.length > 0 && totalPages > 1 && (
+          <div className="mt-6 pt-4 border-t border-gray-200">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="text-sm text-gray-600">
+                Showing <span className="font-semibold">{startIndex + 1}</span>{" "}
+                to{" "}
+                <span className="font-semibold">
+                  {Math.min(endIndex, filteredBooks.length)}
+                </span>{" "}
+                of <span className="font-semibold">{filteredBooks.length}</span>{" "}
+                books
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => goToPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className={`flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-lg ${
+                    currentPage === 1
+                      ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                      : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                  }`}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  Previous
+                </button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                    (page) => {
+                      const showPage =
+                        page === 1 ||
+                        page === totalPages ||
+                        Math.abs(page - currentPage) <= 1;
+                      if (!showPage) {
+                        if (page === 2 || page === totalPages - 1) {
+                          return (
+                            <span key={page} className="px-2 text-gray-400">
+                              ...
+                            </span>
+                          );
+                        }
+                        return null;
+                      }
+                      return (
+                        <button
+                          key={page}
+                          onClick={() => goToPage(page)}
+                          className={`w-10 h-10 text-sm font-medium rounded-lg ${
+                            currentPage === page
+                              ? "bg-blue-600 text-white"
+                              : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      );
+                    }
+                  )}
+                </div>
+                <button
+                  onClick={() => goToPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className={`flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-lg ${
+                    currentPage === totalPages
+                      ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                      : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                  }`}
+                >
+                  Next
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Summary Stats */}
         <div className="mt-6 pt-6 border-t border-gray-200">
@@ -359,11 +584,11 @@ const BookInventory = () => {
                 Available for Borrowing
               </div>
             </div>
-            <div className="p-4 bg-yellow-50 rounded-lg">
+            <div className="p-4 bg-red-50 rounded-lg">
               <div className="text-2xl font-bold text-gray-800">
-                {books.filter((book) => book.status === "low-stock").length}
+                {books.filter((book) => book.status === "out-of-stock").length}
               </div>
-              <div className="text-sm text-gray-600">Books Low on Stock</div>
+              <div className="text-sm text-gray-600">Books Out of Stock</div>
             </div>
           </div>
         </div>

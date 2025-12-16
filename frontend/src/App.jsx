@@ -11,18 +11,16 @@ import CartPage from "./pages/cart/CartPage";
 import AllProduct from "./pages/allProduct/AllProduct";
 
 import CategoryPage from "./pages/category/CategoryPage";
+import BorrowerManagement from "./components/borrowerManagement/BorrowerManagement";
+import BookManagement from "./pages/booksManagement/BookManagement";
 
-import BookManagement from "./components/booksManagement/BookManagement";
-import BookInventory from "./components/booksManagement/BookInventory";
-import AddBook from "./components/booksManagement/AddBook";
-import EditBook from "./components/booksManagement/EditBook";
 // Import your existing context
 import MyState from "./context/myState";
 
 import StudentProfile from "./pages/profile/StudentProfile";
 import LibrarianProfile from "./pages/profile/LibrarianProfile";
 import AdminProfile from "./pages/profile/AdminProfile";
-
+import Registration from "./components/registration/Registration";
 const App = () => {
   return (
     <MyState>
@@ -40,8 +38,9 @@ const App = () => {
           <Route path="/studentprofile" element={<StudentProfile />} />
           <Route path="/librarianprofile" element={<LibrarianProfile />} />
           <Route path="/adminprofile" element={<AdminProfile />} />
-
+          <Route path="/registration" element={<Registration />} />
           <Route path="/bookmanagement" element={<BookManagement />} />
+          <Route path="/borrowermanagement" element={<BorrowerManagement />} />
         </Routes>
         <Toaster />
       </Router>

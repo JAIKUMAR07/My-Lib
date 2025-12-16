@@ -17,6 +17,7 @@ import {
   List,
   Grid,
   ChevronRight,
+  ChevronLeft,
   Eye,
   X,
   Calendar,
@@ -30,9 +31,12 @@ const EditBook = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({});
   const [viewMode, setViewMode] = useState("list"); // 'list' or 'grid'
-  const [filteredBooks, setFilteredBooks] = useState([]);
   const [imagePreview, setImagePreview] = useState(null); // For image preview
   const [imageFile, setImageFile] = useState(null); // For file upload
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedStatus, setSelectedStatus] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const booksPerPage = 8;
 
   // Mock book data - replace with API call
   const [books, setBooks] = useState([
@@ -68,7 +72,7 @@ const EditBook = () => {
       available_copies: 5,
       published_year: 2008,
       added_date: "2023-02-20",
-      status: "low-stock",
+      status: "in-stock",
     },
     {
       id: 3,
@@ -119,7 +123,7 @@ const EditBook = () => {
       available_copies: 2,
       published_year: 1997,
       added_date: "2023-04-05",
-      status: "low-stock",
+      status: "in-stock",
     },
     {
       id: 6,
@@ -169,25 +173,43 @@ const EditBook = () => {
     "Other",
   ];
 
-  // Initialize filtered books
-  useEffect(() => {
-    setFilteredBooks(books);
-  }, [books]);
+  // Filter books based on search, category, and status
+  const filteredBooks = books.filter((book) => {
+    const matchesSearch =
+      searchQuery.trim() === "" ||
+      book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      book.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      book.isbn.includes(searchQuery) ||
+      book.category.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory =
+      selectedCategory === "all" || book.category === selectedCategory;
+    const matchesStatus =
+      selectedStatus === "all" || book.status === selectedStatus;
+    return matchesSearch && matchesCategory && matchesStatus;
+  });
 
+  // Pagination
+  const totalPages = Math.ceil(filteredBooks.length / booksPerPage);
+  const startIndex = (currentPage - 1) * booksPerPage;
+  const endIndex = startIndex + booksPerPage;
+  const paginatedBooks = filteredBooks.slice(startIndex, endIndex);
+
+  // Handle filter change
+  const handleFilterChange = (filterType, value) => {
+    if (filterType === "category") setSelectedCategory(value);
+    if (filterType === "status") setSelectedStatus(value);
+    setCurrentPage(1);
+  };
+
+  // Handle search
   const handleSearch = (e) => {
     e.preventDefault();
-    if (searchQuery.trim() === "") {
-      setFilteredBooks(books);
-    } else {
-      const filtered = books.filter(
-        (book) =>
-          book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          book.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          book.isbn.includes(searchQuery) ||
-          book.category.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-      setFilteredBooks(filtered);
-    }
+    setCurrentPage(1);
+  };
+
+  // Page navigation
+  const goToPage = (page) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
   };
 
   const handleBookSelect = (book) => {
@@ -380,18 +402,27 @@ const EditBook = () => {
 
               {/* Filters */}
               <div className="flex flex-wrap gap-2 mb-4">
-                <select className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg text-sm">
-                  <option>All Categories</option>
+                <select
+                  value={selectedCategory}
+                  onChange={(e) =>
+                    handleFilterChange("category", e.target.value)
+                  }
+                  className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
+                >
+                  <option value="all">All Categories</option>
                   {categories.map((cat) => (
                     <option key={cat} value={cat}>
                       {cat}
                     </option>
                   ))}
                 </select>
-                <select className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg text-sm">
-                  <option>All Status</option>
+                <select
+                  value={selectedStatus}
+                  onChange={(e) => handleFilterChange("status", e.target.value)}
+                  className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
+                >
+                  <option value="all">All Status</option>
                   <option value="in-stock">In Stock</option>
-                  <option value="low-stock">Low Stock</option>
                   <option value="out-of-stock">Out of Stock</option>
                 </select>
               </div>
@@ -402,7 +433,7 @@ const EditBook = () => {
               {viewMode === "list" ? (
                 // List View
                 <div className="divide-y divide-gray-100">
-                  {filteredBooks.map((book) => (
+                  {paginatedBooks.map((book) => (
                     <div
                       key={book.id}
                       onClick={() => handleBookSelect(book)}
@@ -454,7 +485,7 @@ const EditBook = () => {
               ) : (
                 // Grid View
                 <div className="grid grid-cols-2 gap-3 p-4">
-                  {filteredBooks.map((book) => (
+                  {paginatedBooks.map((book) => (
                     <div
                       key={book.id}
                       onClick={() => handleBookSelect(book)}
@@ -502,6 +533,45 @@ const EditBook = () => {
                 </div>
               )}
             </div>
+
+            {/* Pagination */}
+            {filteredBooks.length > booksPerPage && (
+              <div className="p-4 border-t border-gray-200">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">
+                    {startIndex + 1}-{Math.min(endIndex, filteredBooks.length)}{" "}
+                    of {filteredBooks.length}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => goToPage(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className={`p-1.5 rounded ${
+                        currentPage === 1
+                          ? "text-gray-300"
+                          : "text-gray-600 hover:bg-gray-100"
+                      }`}
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <span className="text-sm text-gray-600 px-2">
+                      {currentPage} / {totalPages}
+                    </span>
+                    <button
+                      onClick={() => goToPage(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className={`p-1.5 rounded ${
+                        currentPage === totalPages
+                          ? "text-gray-300"
+                          : "text-gray-600 hover:bg-gray-100"
+                      }`}
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
