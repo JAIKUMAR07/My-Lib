@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Search,
   Edit,
@@ -6,23 +6,15 @@ import {
   RotateCcw,
   Book,
   User,
-  Hash,
-  Globe,
-  Type,
-  Building,
-  FileText,
-  Image as ImageIcon,
-  Package,
-  CheckCircle,
-  List,
-  Grid,
   ChevronRight,
   ChevronLeft,
-  Eye,
   X,
-  Calendar,
-  Tag,
   Upload,
+  ChevronDown,
+  CheckCircle,
+  Loader2,
+  AlertCircle,
+  List,
 } from "lucide-react";
 
 const EditBook = () => {
@@ -30,15 +22,23 @@ const EditBook = () => {
   const [selectedBook, setSelectedBook] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({});
-  const [viewMode, setViewMode] = useState("list"); // 'list' or 'grid'
-  const [imagePreview, setImagePreview] = useState(null); // For image preview
-  const [imageFile, setImageFile] = useState(null); // For file upload
-  const [selectedCategory, setSelectedCategory] = useState("all");
-  const [selectedStatus, setSelectedStatus] = useState("all");
-  const [currentPage, setCurrentPage] = useState(1);
-  const booksPerPage = 8;
+  const [imagePreview, setImagePreview] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [isLoadingList, setIsLoadingList] = useState(false);
 
-  // Mock book data - replace with API call
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const booksPerPage = 6;
+
+  const [categorySearch, setCategorySearch] = useState("");
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+  const categoryRef = useRef(null);
+
+  const [languageSearch, setLanguageSearch] = useState("");
+  const [isLanguageOpen, setIsLanguageOpen] = useState(false);
+  const languageRef = useRef(null);
+
   const [books, setBooks] = useState([
     {
       id: 1,
@@ -46,15 +46,15 @@ const EditBook = () => {
       author: "Thomas H. Cormen",
       category: "Computer Science",
       isbn: "978-0262033848",
-      description: "Comprehensive guide to algorithms and data structures",
+      description:
+        "A comprehensive guide to the modern study of computer algorithms with depth and rigor.",
       publisher: "MIT Press",
       edition: "3rd",
       language: "English",
-      cover_image_url: "https://via.placeholder.com/150",
+      cover_image_url:
+        "https://images.unsplash.com/photo-1532012197267-da84d127e765?w=300&h=450&fit=crop",
       total_copies: 25,
       available_copies: 18,
-      published_year: 2009,
-      added_date: "2023-01-15",
       status: "in-stock",
     },
     {
@@ -63,16 +63,15 @@ const EditBook = () => {
       author: "Robert C. Martin",
       category: "Computer Science",
       isbn: "978-0132350884",
-      description: "A handbook of agile software craftsmanship",
+      description: "A handbook of agile software craftsmanship.",
       publisher: "Pearson",
       edition: "1st",
       language: "English",
-      cover_image_url: "https://via.placeholder.com/150",
+      cover_image_url:
+        "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=300&h=450&fit=crop",
       total_copies: 15,
       available_copies: 5,
-      published_year: 2008,
-      added_date: "2023-02-20",
-      status: "in-stock",
+      status: "low-stock",
     },
     {
       id: 3,
@@ -80,89 +79,31 @@ const EditBook = () => {
       author: "Andrew Hunt, David Thomas",
       category: "Computer Science",
       isbn: "978-0201616224",
-      description: "From journeyman to master",
+      description: "From journeyman to master.",
       publisher: "Addison-Wesley",
       edition: "2nd",
       language: "English",
-      cover_image_url: "https://via.placeholder.com/150",
+      cover_image_url:
+        "https://images.unsplash.com/photo-1516979187457-637abb4f9353?w=300&h=450&fit=crop",
       total_copies: 20,
       available_copies: 20,
-      published_year: 2019,
-      added_date: "2023-03-10",
       status: "in-stock",
-    },
-    {
-      id: 4,
-      title: "Design Patterns",
-      author: "Erich Gamma, Richard Helm",
-      category: "Computer Science",
-      isbn: "978-0201633610",
-      description: "Elements of Reusable Object-Oriented Software",
-      publisher: "Addison-Wesley",
-      edition: "1st",
-      language: "English",
-      cover_image_url: "https://via.placeholder.com/150",
-      total_copies: 12,
-      available_copies: 12,
-      published_year: 1994,
-      added_date: "2023-01-25",
-      status: "in-stock",
-    },
-    {
-      id: 5,
-      title: "The Art of Computer Programming",
-      author: "Donald E. Knuth",
-      category: "Computer Science",
-      isbn: "978-0201896831",
-      description: "Fundamental algorithms",
-      publisher: "Addison-Wesley",
-      edition: "3rd",
-      language: "English",
-      cover_image_url: "https://via.placeholder.com/150",
-      total_copies: 8,
-      available_copies: 2,
-      published_year: 1997,
-      added_date: "2023-04-05",
-      status: "in-stock",
-    },
-    {
-      id: 6,
-      title: "Structure and Interpretation of Computer Programs",
-      author: "Harold Abelson, Gerald Jay Sussman",
-      category: "Computer Science",
-      isbn: "978-0262510875",
-      description: "Classic computer science textbook",
-      publisher: "MIT Press",
-      edition: "2nd",
-      language: "English",
-      cover_image_url: "https://via.placeholder.com/150",
-      total_copies: 10,
-      available_copies: 0,
-      published_year: 1996,
-      added_date: "2023-02-15",
-      status: "out-of-stock",
     },
   ]);
 
-  const categories = [
+  const [categories, setCategories] = useState([
     "Computer Science",
     "Mathematics",
     "Physics",
-    "Chemistry",
-    "Biology",
-    "History",
-    "Literature",
-    "Philosophy",
-    "Art & Design",
-    "Business",
+    "Story",
+    "Civil",
+    "Electronics",
+    "Mechanical",
     "Engineering",
-    "Medicine",
-    "Law",
-    "Education",
-    "Other",
-  ];
+    "Literature",
+  ]);
 
-  const languages = [
+  const [languages, setLanguages] = useState([
     "English",
     "Hindi",
     "Spanish",
@@ -170,54 +111,54 @@ const EditBook = () => {
     "German",
     "Chinese",
     "Japanese",
-    "Other",
-  ];
+  ]);
 
-  // Filter books based on search, category, and status
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (categoryRef.current && !categoryRef.current.contains(event.target)) {
+        setIsCategoryOpen(false);
+      }
+      if (languageRef.current && !languageRef.current.contains(event.target)) {
+        setIsLanguageOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const filteredBooks = books.filter((book) => {
     const matchesSearch =
       searchQuery.trim() === "" ||
       book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       book.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      book.isbn.includes(searchQuery) ||
-      book.category.toLowerCase().includes(searchQuery.toLowerCase());
+      book.isbn.includes(searchQuery);
     const matchesCategory =
       selectedCategory === "all" || book.category === selectedCategory;
-    const matchesStatus =
-      selectedStatus === "all" || book.status === selectedStatus;
-    return matchesSearch && matchesCategory && matchesStatus;
+    return matchesSearch && matchesCategory;
   });
 
-  // Pagination
-  const totalPages = Math.ceil(filteredBooks.length / booksPerPage);
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredBooks.length / booksPerPage),
+  );
   const startIndex = (currentPage - 1) * booksPerPage;
-  const endIndex = startIndex + booksPerPage;
-  const paginatedBooks = filteredBooks.slice(startIndex, endIndex);
+  const paginatedBooks = filteredBooks.slice(
+    startIndex,
+    startIndex + booksPerPage,
+  );
 
-  // Handle filter change
-  const handleFilterChange = (filterType, value) => {
-    if (filterType === "category") setSelectedCategory(value);
-    if (filterType === "status") setSelectedStatus(value);
-    setCurrentPage(1);
-  };
-
-  // Handle search
-  const handleSearch = (e) => {
-    e.preventDefault();
-    setCurrentPage(1);
-  };
-
-  // Page navigation
   const goToPage = (page) => {
-    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+    if (page >= 1 && page <= totalPages) setCurrentPage(page);
   };
 
   const handleBookSelect = (book) => {
     setSelectedBook(book);
     setFormData(book);
-    setImagePreview(book.cover_image_url); // Set initial preview
-    setImageFile(null); // Clear any previous file
+    setCategorySearch(book.category);
+    setLanguageSearch(book.language);
+    setImagePreview(book.cover_image_url);
     setIsEditing(false);
+    setShowSuccess(false);
   };
 
   const handleEdit = () => {
@@ -226,53 +167,28 @@ const EditBook = () => {
 
   const handleSave = async (e) => {
     e.preventDefault();
+    setIsSaving(true);
 
-    // Prepare form data for API call
-    const bookData = new FormData();
+    await new Promise((resolve) => setTimeout(resolve, 1500));
 
-    // Append all text fields
-    Object.keys(formData).forEach((key) => {
-      if (key !== "cover_image_url" || !imageFile) {
-        bookData.append(key, formData[key]);
-      }
-    });
+    setBooks((prev) =>
+      prev.map((book) =>
+        book.id === selectedBook.id ? { ...formData, id: book.id } : book,
+      ),
+    );
+    setSelectedBook({ ...formData, id: selectedBook.id });
+    setIsSaving(false);
+    setIsEditing(false);
+    setShowSuccess(true);
 
-    // If there's a new image file, append it
-    if (imageFile) {
-      bookData.append("cover_image", imageFile);
-    }
-
-    // API call to update book
-    try {
-      // Example API call (adjust based on your backend)
-      // const response = await fetch(`/api/books/${selectedBook.id}`, {
-      //   method: 'PUT',
-      //   body: bookData,
-      // });
-
-      console.log("Saving book with image:", formData);
-
-      // Update local state
-      setIsEditing(false);
-      // Reset image states
-      setImageFile(null);
-
-      // Update local state
-      setBooks((prev) =>
-        prev.map((book) =>
-          book.id === selectedBook.id ? { ...formData, id: book.id } : book
-        )
-      );
-      setSelectedBook({ ...formData, id: selectedBook.id });
-    } catch (error) {
-      console.error("Error saving book:", error);
-    }
+    setTimeout(() => setShowSuccess(false), 3000);
   };
 
   const handleCancel = () => {
     setFormData(selectedBook);
+    setCategorySearch(selectedBook.category);
+    setLanguageSearch(selectedBook.language);
     setImagePreview(selectedBook?.cover_image_url || null);
-    setImageFile(null);
     setIsEditing(false);
   };
 
@@ -288,406 +204,351 @@ const EditBook = () => {
     setSelectedBook(null);
     setIsEditing(false);
     setFormData({});
+    setCategorySearch("");
+    setLanguageSearch("");
     setImagePreview(null);
-    setImageFile(null);
+    setShowSuccess(false);
+  };
+
+  const selectCategory = (cat) => {
+    setFormData((prev) => ({ ...prev, category: cat }));
+    setCategorySearch(cat);
+    setIsCategoryOpen(false);
+  };
+
+  const createNewCategory = () => {
+    if (categorySearch.trim()) {
+      const newCat = categorySearch.trim();
+      if (!categories.includes(newCat))
+        setCategories((prev) => [...prev, newCat]);
+      selectCategory(newCat);
+    }
+  };
+
+  const selectLanguage = (lang) => {
+    setFormData((prev) => ({ ...prev, language: lang }));
+    setLanguageSearch(lang);
+    setIsLanguageOpen(false);
+  };
+
+  const createNewLanguage = () => {
+    if (languageSearch.trim()) {
+      const newLang = languageSearch.trim();
+      if (!languages.includes(newLang))
+        setLanguages((prev) => [...prev, newLang]);
+      selectLanguage(newLang);
+    }
   };
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setImageFile(file);
-
-      // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result);
-        // Update formData with the new image (could be base64 or URL)
-        setFormData((prev) => ({
-          ...prev,
-          cover_image_url: reader.result, // Store as base64 or you can upload to server
-        }));
+        setFormData((prev) => ({ ...prev, cover_image_url: reader.result }));
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const removeImage = () => {
-    setImagePreview(null);
-    setImageFile(null);
-    setFormData((prev) => ({
-      ...prev,
-      cover_image_url: "", // Clear the image URL
-    }));
-  };
-
   const getStatusColor = (status) => {
     switch (status) {
       case "in-stock":
-        return "bg-green-100 text-green-800";
+        return "bg-emerald-100 text-emerald-700";
       case "low-stock":
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-amber-100 text-amber-700";
       case "out-of-stock":
-        return "bg-red-100 text-red-800";
+        return "bg-rose-100 text-rose-700";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-slate-100 text-slate-700";
     }
   };
 
+  const filteredCategories = categories.filter((cat) =>
+    cat.toLowerCase().includes(categorySearch.toLowerCase()),
+  );
+
+  const exactMatchCategory = categories.find(
+    (cat) => cat.toLowerCase() === categorySearch.toLowerCase(),
+  );
+
+  const filteredLanguages = languages.filter((lang) =>
+    lang.toLowerCase().includes(languageSearch.toLowerCase()),
+  );
+
+  const exactMatchLanguage = languages.find(
+    (lang) => lang.toLowerCase() === languageSearch.toLowerCase(),
+  );
+
   return (
-    <div className="max-w-7xl mx-auto">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-          <Edit className="w-6 h-6 text-yellow-600" />
-          Edit Book Details
-        </h2>
-        <p className="text-gray-600">
-          Select a book from the list to edit its information
-        </p>
+    <div className="max-w-7xl mx-auto py-8 px-6">
+      {/* Page Header */}
+      <div className="mb-12 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-3 rounded-xl bg-amber-100 border border-amber-200">
+              <Edit className="w-6 h-6 text-amber-600" />
+            </div>
+            <div>
+              <h2 className="text-3xl font-bold text-slate-900">
+                Book Record <span className="text-amber-600">Editor</span>
+              </h2>
+              <p className="text-slate-500 text-sm mt-1 max-w-xl">
+                Modify catalog parameters and adjust availability labels within
+                the master repository.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="flex gap-4">
+          <div className="px-5 py-2.5 bg-amber-50 rounded-xl border border-amber-100 flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+            <span className="text-[10px] font-semibold text-amber-700 uppercase tracking-wide">
+              Master Editor Active
+            </span>
+          </div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Left Column - Book List */}
-        <div className="lg:col-span-1">
-          <div className="bg-white rounded-xl shadow h-full">
-            {/* Header */}
-            <div className="p-4 border-b border-gray-200">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-gray-800 flex items-center gap-2">
-                  <List className="w-5 h-5" />
-                  Book List ({filteredBooks.length})
-                </h3>
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => setViewMode("list")}
-                    className={`p-2 rounded-lg ${
-                      viewMode === "list"
-                        ? "bg-blue-100 text-blue-600"
-                        : "text-gray-500 hover:bg-gray-100"
-                    }`}
-                  >
-                    <List className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => setViewMode("grid")}
-                    className={`p-2 rounded-lg ${
-                      viewMode === "grid"
-                        ? "bg-blue-100 text-blue-600"
-                        : "text-gray-500 hover:bg-gray-100"
-                    }`}
-                  >
-                    <Grid className="w-4 h-4" />
-                  </button>
-                </div>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Discovery Sidebar */}
+        <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col h-[700px] overflow-hidden">
+          <div className="p-6 border-b border-slate-200 bg-slate-50/30">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="font-semibold text-slate-600 flex items-center gap-2 text-xs uppercase tracking-wider">
+                <List className="w-4 h-4" /> Collection
+              </h3>
+              <div className="px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-[10px] font-semibold text-slate-500">
+                {books.length} TOTAL
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search books..."
+                  className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:border-amber-400 focus:ring-2 focus:ring-amber-100 transition-all outline-none"
+                />
               </div>
 
-              {/* Search */}
-              <form onSubmit={handleSearch} className="mb-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search books..."
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-              </form>
-
-              {/* Filters */}
-              <div className="flex flex-wrap gap-2 mb-4">
+              <div className="relative">
                 <select
                   value={selectedCategory}
-                  onChange={(e) =>
-                    handleFilterChange("category", e.target.value)
-                  }
-                  className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
+                  onChange={(e) => {
+                    setSelectedCategory(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-700 outline-none appearance-none cursor-pointer"
                 >
-                  <option value="all">All Categories</option>
+                  <option value="all">All Genres</option>
                   {categories.map((cat) => (
                     <option key={cat} value={cat}>
                       {cat}
                     </option>
                   ))}
                 </select>
-                <select
-                  value={selectedStatus}
-                  onChange={(e) => handleFilterChange("status", e.target.value)}
-                  className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
-                >
-                  <option value="all">All Status</option>
-                  <option value="in-stock">In Stock</option>
-                  <option value="out-of-stock">Out of Stock</option>
-                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
               </div>
             </div>
+          </div>
 
-            {/* Book List */}
-            <div className="overflow-y-auto max-h-[calc(100vh-300px)]">
-              {viewMode === "list" ? (
-                // List View
-                <div className="divide-y divide-gray-100">
-                  {paginatedBooks.map((book) => (
-                    <div
-                      key={book.id}
-                      onClick={() => handleBookSelect(book)}
-                      className={`p-4 cursor-pointer transition hover:bg-gray-50 ${
-                        selectedBook?.id === book.id
-                          ? "bg-blue-50 border-l-4 border-blue-500"
-                          : ""
-                      }`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="w-12 h-16 bg-gray-200 rounded overflow-hidden flex-shrink-0">
-                          {book.cover_image_url ? (
-                            <img
-                              src={book.cover_image_url}
-                              alt={book.title}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                              <Book className="w-6 h-6 text-gray-400" />
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-medium text-gray-800 truncate">
-                            {book.title}
-                          </h4>
-                          <p className="text-sm text-gray-600 truncate">
-                            {book.author}
-                          </p>
-                          <div className="flex items-center gap-2 mt-2">
-                            <span className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded">
-                              {book.category}
-                            </span>
-                            <span
-                              className={`text-xs px-2 py-1 rounded ${getStatusColor(
-                                book.status
-                              )}`}
-                            >
-                              {book.status.replace("-", " ")}
-                            </span>
-                          </div>
-                        </div>
-                        <ChevronRight className="w-5 h-5 text-gray-400" />
+          {/* Book List */}
+          <div className="flex-1 overflow-y-auto p-4">
+            {isLoadingList ? (
+              <div className="h-full flex flex-col items-center justify-center text-slate-400 gap-3">
+                <Loader2 className="w-8 h-8 animate-spin" />
+                <span className="text-xs font-medium">
+                  Loading collection...
+                </span>
+              </div>
+            ) : paginatedBooks.length > 0 ? (
+              <div className="space-y-3">
+                {paginatedBooks.map((book) => (
+                  <div
+                    key={book.id}
+                    onClick={() => handleBookSelect(book)}
+                    className={`p-4 cursor-pointer transition-all rounded-xl border-2 ${
+                      selectedBook?.id === book.id
+                        ? "bg-amber-50 border-amber-400 shadow-md"
+                        : "bg-white border-transparent hover:bg-slate-50 hover:border-slate-200"
+                    }`}
+                  >
+                    <div className="flex gap-3">
+                      <div className="w-12 h-16 rounded-lg overflow-hidden shrink-0 bg-slate-100">
+                        <img
+                          src={book.cover_image_url}
+                          alt={book.title}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                // Grid View
-                <div className="grid grid-cols-2 gap-3 p-4">
-                  {paginatedBooks.map((book) => (
-                    <div
-                      key={book.id}
-                      onClick={() => handleBookSelect(book)}
-                      className={`p-3 border rounded-lg cursor-pointer transition hover:shadow-md ${
-                        selectedBook?.id === book.id
-                          ? "border-blue-500 bg-blue-50"
-                          : "border-gray-200"
-                      }`}
-                    >
-                      <div className="w-full h-24 bg-gray-200 rounded mb-2 overflow-hidden">
-                        {book.cover_image_url ? (
-                          <img
-                            src={book.cover_image_url}
-                            alt={book.title}
-                            className="w-full h-full object-cover"
+                      <div className="flex-1 min-w-0">
+                        <h4
+                          className={`font-semibold text-sm truncate ${selectedBook?.id === book.id ? "text-amber-700" : "text-slate-800"}`}
+                        >
+                          {book.title}
+                        </h4>
+                        <p className="text-xs text-slate-500 truncate mt-1 flex items-center gap-1">
+                          <User className="w-3 h-3" /> {book.author}
+                        </p>
+                        <div className="flex items-center gap-2 mt-2">
+                          <div
+                            className={`w-1.5 h-1.5 rounded-full ${book.status === "in-stock" ? "bg-emerald-500" : "bg-amber-500"}`}
                           />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <Book className="w-8 h-8 text-gray-400" />
-                          </div>
-                        )}
+                          <span className="text-[9px] font-mono text-slate-400">
+                            {book.isbn.slice(-8)}
+                          </span>
+                        </div>
                       </div>
-                      <h4 className="font-medium text-gray-800 text-sm truncate">
-                        {book.title}
-                      </h4>
-                      <p className="text-xs text-gray-600 truncate">
-                        {book.author}
-                      </p>
-                      <span
-                        className={`text-xs px-2 py-1 rounded mt-2 inline-block ${getStatusColor(
-                          book.status
-                        )}`}
-                      >
-                        {book.status.replace("-", " ")}
-                      </span>
                     </div>
-                  ))}
-                </div>
-              )}
-
-              {filteredBooks.length === 0 && (
-                <div className="text-center py-8">
-                  <Search className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-500">No books found</p>
-                </div>
-              )}
-            </div>
-
-            {/* Pagination */}
-            {filteredBooks.length > booksPerPage && (
-              <div className="p-4 border-t border-gray-200">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">
-                    {startIndex + 1}-{Math.min(endIndex, filteredBooks.length)}{" "}
-                    of {filteredBooks.length}
-                  </span>
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => goToPage(currentPage - 1)}
-                      disabled={currentPage === 1}
-                      className={`p-1.5 rounded ${
-                        currentPage === 1
-                          ? "text-gray-300"
-                          : "text-gray-600 hover:bg-gray-100"
-                      }`}
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                    </button>
-                    <span className="text-sm text-gray-600 px-2">
-                      {currentPage} / {totalPages}
-                    </span>
-                    <button
-                      onClick={() => goToPage(currentPage + 1)}
-                      disabled={currentPage === totalPages}
-                      className={`p-1.5 rounded ${
-                        currentPage === totalPages
-                          ? "text-gray-300"
-                          : "text-gray-600 hover:bg-gray-100"
-                      }`}
-                    >
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
                   </div>
-                </div>
+                ))}
+              </div>
+            ) : (
+              <div className="h-full flex flex-col items-center justify-center text-slate-400 gap-3">
+                <AlertCircle className="w-10 h-10" />
+                <p className="text-xs font-medium text-center">
+                  No books match your search
+                </p>
               </div>
             )}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="p-4 border-t border-slate-200 bg-slate-50/30">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-medium text-slate-500">
+                  Page {currentPage} of {totalPages}
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => goToPage(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center disabled:opacity-40 hover:border-amber-400 transition-all"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => goToPage(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center disabled:opacity-40 hover:border-amber-400 transition-all"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Right Column - Book Editor */}
-        <div className="lg:col-span-3">
+        {/* Editor Workspace */}
+        <div className="lg:col-span-8">
           {selectedBook ? (
-            <div className="bg-white rounded-xl shadow">
-              {/* Editor Header */}
-              <div className="p-6 border-b border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="relative w-20 h-24">
-                      {imagePreview || formData.cover_image_url ? (
-                        <img
-                          src={imagePreview || formData.cover_image_url}
-                          alt={formData.title}
-                          className="w-full h-full object-cover rounded-lg"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gray-200 rounded flex items-center justify-center">
-                          <ImageIcon className="w-8 h-8 text-gray-400" />
-                        </div>
-                      )}
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-gray-800">
-                        {formData.title}
-                      </h3>
-                      <p className="text-gray-600">{formData.author}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={clearSelection}
-                      className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg"
-                      title="Clear selection"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-                    <span
-                      className={`px-3 py-1 rounded-full text-sm font-bold ${getStatusColor(
-                        selectedBook.status
-                      )}`}
-                    >
-                      {selectedBook.status.replace("-", " ").toUpperCase()}
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden relative">
+              {/* Success Toast */}
+              {showSuccess && (
+                <div className="absolute top-4 right-4 z-50 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div className="px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center gap-2 shadow-lg">
+                    <CheckCircle className="w-4 h-4 text-emerald-600" />
+                    <span className="text-xs font-medium text-emerald-700">
+                      Record updated successfully
                     </span>
                   </div>
                 </div>
-              </div>
+              )}
 
-              {/* Editor Content */}
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-semibold text-gray-800">
-                    Book Details Editor
-                  </h3>
-                  <div className="flex gap-2">
-                    {!isEditing ? (
-                      <button
-                        onClick={handleEdit}
-                        className="flex items-center gap-2 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700"
-                      >
-                        <Edit className="w-4 h-4" />
-                        Edit Details
-                      </button>
-                    ) : (
-                      <>
-                        <button
-                          onClick={handleCancel}
-                          className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
-                        >
-                          <RotateCcw className="w-4 h-4" />
-                          Cancel
-                        </button>
-                        <button
-                          onClick={handleSave}
-                          className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                        >
-                          <Save className="w-4 h-4" />
-                          Save Changes
-                        </button>
-                      </>
+              {/* Header */}
+              <div className="p-6 border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="flex items-center gap-6">
+                  <div className="relative w-20 h-28 rounded-xl overflow-hidden shadow-md group">
+                    <img
+                      src={imagePreview}
+                      alt="Cover"
+                      className="w-full h-full object-cover"
+                    />
+                    {isEditing && (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
+                        <label className="cursor-pointer p-2 bg-white/20 hover:bg-white/30 rounded-full transition-all">
+                          <Upload className="w-4 h-4 text-white" />
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageUpload}
+                            className="hidden"
+                          />
+                        </label>
+                      </div>
                     )}
                   </div>
-                </div>
-
-                {/* Quick Stats */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                  <div className="p-4 bg-blue-50 rounded-lg">
-                    <div className="text-2xl font-bold text-gray-800">
-                      {formData.total_copies || 0}
+                  <div>
+                    <div
+                      className={`inline-flex px-2.5 py-1 rounded-lg text-[10px] font-semibold uppercase mb-2 ${getStatusColor(formData.status)}`}
+                    >
+                      {formData.status?.replace("-", " ")}
                     </div>
-                    <div className="text-sm text-gray-600">Total Copies</div>
-                  </div>
-                  <div className="p-4 bg-green-50 rounded-lg">
-                    <div className="text-2xl font-bold text-gray-800">
-                      {formData.available_copies || 0}
-                    </div>
-                    <div className="text-sm text-gray-600">Available</div>
-                  </div>
-                  <div className="p-4 bg-purple-50 rounded-lg">
-                    <div className="text-2xl font-bold text-gray-800">
-                      {formData.total_copies - formData.available_copies || 0}
-                    </div>
-                    <div className="text-sm text-gray-600">Borrowed</div>
-                  </div>
-                  <div className="p-4 bg-yellow-50 rounded-lg">
-                    <div className="text-2xl font-bold text-gray-800">
-                      {formData.edition || "N/A"}
-                    </div>
-                    <div className="text-sm text-gray-600">Edition</div>
+                    <h3 className="text-xl font-bold text-slate-900 mb-1">
+                      {formData.title}
+                    </h3>
+                    <p className="text-sm text-slate-500 flex items-center gap-2">
+                      <User className="w-4 h-4" /> {formData.author}
+                    </p>
                   </div>
                 </div>
+                <div className="flex items-center gap-3">
+                  {!isEditing ? (
+                    <button
+                      onClick={handleEdit}
+                      className="px-6 py-2.5 bg-slate-900 text-white rounded-xl font-medium text-sm hover:bg-slate-800 transition-all flex items-center gap-2"
+                    >
+                      <Edit className="w-4 h-4" /> Modify Record
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        onClick={handleCancel}
+                        className="px-4 py-2.5 bg-slate-100 text-slate-600 rounded-xl font-medium text-sm hover:bg-slate-200 transition-all flex items-center gap-2"
+                      >
+                        <RotateCcw className="w-4 h-4" /> Cancel
+                      </button>
+                      <button
+                        onClick={handleSave}
+                        disabled={isSaving}
+                        className="px-6 py-2.5 bg-emerald-600 text-white rounded-xl font-medium text-sm hover:bg-emerald-700 transition-all flex items-center gap-2 disabled:opacity-70"
+                      >
+                        {isSaving ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Save className="w-4 h-4" />
+                        )}
+                        {isSaving ? "Saving..." : "Save Changes"}
+                      </button>
+                    </>
+                  )}
+                  <button
+                    onClick={clearSelection}
+                    className="p-2.5 text-slate-400 hover:text-rose-600 transition-all rounded-lg hover:bg-rose-50"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
 
-                {/* Edit Form */}
-                <form className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Title */}
+              {/* Form */}
+              <div className="p-6 space-y-6">
+                {/* Core Information */}
+                <div>
+                  <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">
+                    Core Information
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
-                        <Type className="w-4 h-4" />
-                        Title *
+                      <label className="text-xs font-medium text-slate-600 mb-1.5 block">
+                        Book Title *
                       </label>
                       <input
                         type="text"
@@ -695,15 +556,15 @@ const EditBook = () => {
                         value={formData.title || ""}
                         onChange={handleChange}
                         disabled={!isEditing}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg disabled:bg-gray-100"
-                        required
+                        className={`w-full px-4 py-2.5 rounded-xl text-sm font-medium outline-none transition-all ${
+                          isEditing
+                            ? "bg-slate-50 border border-slate-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                            : "bg-transparent border border-transparent text-slate-900"
+                        }`}
                       />
                     </div>
-
-                    {/* Author */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
-                        <User className="w-4 h-4" />
+                      <label className="text-xs font-medium text-slate-600 mb-1.5 block">
                         Author *
                       </label>
                       <input
@@ -712,16 +573,79 @@ const EditBook = () => {
                         value={formData.author || ""}
                         onChange={handleChange}
                         disabled={!isEditing}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg disabled:bg-gray-100"
-                        required
+                        className={`w-full px-4 py-2.5 rounded-xl text-sm font-medium outline-none transition-all ${
+                          isEditing
+                            ? "bg-slate-50 border border-slate-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                            : "bg-transparent border border-transparent text-slate-900"
+                        }`}
                       />
                     </div>
+                  </div>
+                </div>
 
-                    {/* ISBN */}
+                {/* Classification */}
+                <div>
+                  <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">
+                    Classification
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="relative" ref={categoryRef}>
+                      <label className="text-xs font-medium text-slate-600 mb-1.5 block">
+                        Category *
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={categorySearch}
+                          onChange={(e) => {
+                            setCategorySearch(e.target.value);
+                            setIsCategoryOpen(true);
+                          }}
+                          disabled={!isEditing}
+                          onFocus={() => setIsCategoryOpen(true)}
+                          className={`w-full px-4 py-2.5 rounded-xl text-sm font-medium outline-none transition-all pr-10 ${
+                            isEditing
+                              ? "bg-slate-50 border border-slate-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                              : "bg-transparent border border-transparent text-slate-900"
+                          }`}
+                        />
+                        {isEditing && (
+                          <ChevronDown
+                            className={`absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 transition-transform ${isCategoryOpen ? "rotate-180" : ""}`}
+                          />
+                        )}
+                        {isCategoryOpen && isEditing && (
+                          <div className="absolute top-full left-0 w-full mt-2 bg-white rounded-xl shadow-lg border border-slate-200 z-50 overflow-hidden">
+                            <div className="max-h-48 overflow-y-auto">
+                              {filteredCategories.map((cat) => (
+                                <button
+                                  key={cat}
+                                  type="button"
+                                  onClick={() => selectCategory(cat)}
+                                  className="w-full text-left px-4 py-2.5 hover:bg-slate-50 text-sm text-slate-700 transition-colors"
+                                >
+                                  {cat}
+                                </button>
+                              ))}
+                            </div>
+                            {!exactMatchCategory && categorySearch.trim() && (
+                              <div className="p-3 border-t border-slate-200 bg-slate-50">
+                                <button
+                                  type="button"
+                                  onClick={createNewCategory}
+                                  className="w-full py-2 bg-slate-900 text-white rounded-lg text-xs font-medium hover:bg-slate-800 transition-all"
+                                >
+                                  + Create "{categorySearch}"
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
-                        <Hash className="w-4 h-4" />
-                        ISBN *
+                      <label className="text-xs font-medium text-slate-600 mb-1.5 block">
+                        ISBN-13 *
                       </label>
                       <input
                         type="text"
@@ -729,38 +653,103 @@ const EditBook = () => {
                         value={formData.isbn || ""}
                         onChange={handleChange}
                         disabled={!isEditing}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg disabled:bg-gray-100 font-mono"
-                        required
+                        className={`w-full px-4 py-2.5 rounded-xl font-mono text-sm outline-none transition-all ${
+                          isEditing
+                            ? "bg-slate-50 border border-slate-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                            : "bg-transparent border border-transparent text-slate-900"
+                        }`}
                       />
                     </div>
+                  </div>
+                </div>
 
-                    {/* Category */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
-                        <Tag className="w-4 h-4" />
-                        Category *
+                {/* Catalog Details */}
+                <div>
+                  <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">
+                    Catalog Details
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="relative" ref={languageRef}>
+                      <label className="text-xs font-medium text-slate-600 mb-1.5 block">
+                        Language
                       </label>
-                      <select
-                        name="category"
-                        value={formData.category || ""}
-                        onChange={handleChange}
-                        disabled={!isEditing}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg disabled:bg-gray-100"
-                        required
-                      >
-                        <option value="">Select category</option>
-                        {categories.map((cat) => (
-                          <option key={cat} value={cat}>
-                            {cat}
-                          </option>
-                        ))}
-                      </select>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={languageSearch}
+                          onChange={(e) => {
+                            setLanguageSearch(e.target.value);
+                            setIsLanguageOpen(true);
+                          }}
+                          disabled={!isEditing}
+                          onFocus={() => setIsLanguageOpen(true)}
+                          className={`w-full px-4 py-2.5 rounded-xl text-sm font-medium outline-none transition-all pr-10 ${
+                            isEditing
+                              ? "bg-slate-50 border border-slate-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                              : "bg-transparent border border-transparent text-slate-900"
+                          }`}
+                        />
+                        {isEditing && (
+                          <ChevronDown
+                            className={`absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 transition-transform ${isLanguageOpen ? "rotate-180" : ""}`}
+                          />
+                        )}
+                        {isLanguageOpen && isEditing && (
+                          <div className="absolute top-full left-0 w-full mt-2 bg-white rounded-xl shadow-lg border border-slate-200 z-50 overflow-hidden">
+                            <div className="max-h-48 overflow-y-auto">
+                              {filteredLanguages.map((lang) => (
+                                <button
+                                  key={lang}
+                                  type="button"
+                                  onClick={() => selectLanguage(lang)}
+                                  className="w-full text-left px-4 py-2.5 hover:bg-slate-50 text-sm text-slate-700"
+                                >
+                                  {lang}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
-
-                    {/* Publisher */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
-                        <Building className="w-4 h-4" />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-xs font-medium text-slate-600 mb-1.5 block">
+                          Copies
+                        </label>
+                        <input
+                          type="number"
+                          name="total_copies"
+                          value={formData.total_copies || 0}
+                          onChange={handleChange}
+                          disabled={!isEditing}
+                          className={`w-full px-4 py-2.5 rounded-xl text-sm font-medium outline-none transition-all ${
+                            isEditing
+                              ? "bg-slate-50 border border-slate-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                              : "bg-transparent border border-transparent text-slate-900"
+                          }`}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-slate-600 mb-1.5 block">
+                          Edition
+                        </label>
+                        <input
+                          type="text"
+                          name="edition"
+                          value={formData.edition || ""}
+                          onChange={handleChange}
+                          disabled={!isEditing}
+                          className={`w-full px-4 py-2.5 rounded-xl text-sm font-medium outline-none transition-all ${
+                            isEditing
+                              ? "bg-slate-50 border border-slate-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                              : "bg-transparent border border-transparent text-slate-900"
+                          }`}
+                        />
+                      </div>
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="text-xs font-medium text-slate-600 mb-1.5 block">
                         Publisher
                       </label>
                       <input
@@ -769,215 +758,47 @@ const EditBook = () => {
                         value={formData.publisher || ""}
                         onChange={handleChange}
                         disabled={!isEditing}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg disabled:bg-gray-100"
-                      />
-                    </div>
-
-                    {/* Edition */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Edition
-                      </label>
-                      <input
-                        type="text"
-                        name="edition"
-                        value={formData.edition || ""}
-                        onChange={handleChange}
-                        disabled={!isEditing}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg disabled:bg-gray-100"
-                      />
-                    </div>
-
-                    {/* Language */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
-                        <Globe className="w-4 h-4" />
-                        Language
-                      </label>
-                      <select
-                        name="language"
-                        value={formData.language || ""}
-                        onChange={handleChange}
-                        disabled={!isEditing}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg disabled:bg-gray-100"
-                      >
-                        {languages.map((lang) => (
-                          <option key={lang} value={lang}>
-                            {lang}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {/* Total Copies */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
-                        <Package className="w-4 h-4" />
-                        Total Copies *
-                      </label>
-                      <input
-                        type="number"
-                        name="total_copies"
-                        value={formData.total_copies || 1}
-                        onChange={handleChange}
-                        disabled={!isEditing}
-                        min="1"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg disabled:bg-gray-100"
-                        required
+                        className={`w-full px-4 py-2.5 rounded-xl text-sm font-medium outline-none transition-all ${
+                          isEditing
+                            ? "bg-slate-50 border border-slate-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                            : "bg-transparent border border-transparent text-slate-900"
+                        }`}
                       />
                     </div>
                   </div>
+                </div>
 
-                  {/* Description */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
-                      <FileText className="w-4 h-4" />
-                      Description
-                    </label>
-                    <textarea
-                      name="description"
-                      value={formData.description || ""}
-                      onChange={handleChange}
-                      disabled={!isEditing}
-                      rows="4"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg disabled:bg-gray-100"
-                    />
-                  </div>
-
-                  {/* Cover Image Upload */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
-                      <ImageIcon className="w-4 h-4" />
-                      Cover Image
-                    </label>
-
-                    <div className="space-y-4">
-                      {/* Current Image Preview */}
-                      {(imagePreview || formData.cover_image_url) && (
-                        <div className="relative inline-block">
-                          <img
-                            src={imagePreview || formData.cover_image_url}
-                            alt="Book Cover"
-                            className="max-w-xs h-64 object-contain rounded-lg border border-gray-300"
-                          />
-                          {isEditing && (
-                            <button
-                              type="button"
-                              onClick={removeImage}
-                              className="absolute top-2 right-2 p-1 bg-red-100 text-red-600 rounded-full hover:bg-red-200"
-                              title="Remove image"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Upload Button (only in edit mode) */}
-                      {isEditing && (
-                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleImageUpload}
-                            className="hidden"
-                            id="image-upload"
-                            disabled={!isEditing}
-                          />
-                          <label
-                            htmlFor="image-upload"
-                            className={`cursor-pointer ${
-                              !isEditing ? "opacity-50 cursor-not-allowed" : ""
-                            }`}
-                          >
-                            <div className="flex flex-col items-center">
-                              <Upload className="w-12 h-12 text-gray-400 mb-3" />
-                              <p className="text-sm text-gray-600 mb-2">
-                                {imagePreview || formData.cover_image_url
-                                  ? "Click to change image"
-                                  : "Click to upload cover image"}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                Supports: JPG, PNG, GIF (Max 5MB)
-                              </p>
-                              <div className="mt-3">
-                                <span className="inline-block px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100">
-                                  Choose File
-                                </span>
-                              </div>
-                            </div>
-                          </label>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Additional Info */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-200">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Published Year
-                      </label>
-                      <input
-                        type="number"
-                        name="published_year"
-                        value={formData.published_year || ""}
-                        onChange={handleChange}
-                        disabled={!isEditing}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg disabled:bg-gray-100"
-                        min="1900"
-                        max={new Date().getFullYear()}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
-                        <Calendar className="w-4 h-4" />
-                        Added Date
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.added_date || "N/A"}
-                        disabled
-                        className="w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg"
-                      />
-                    </div>
-                  </div>
-                </form>
+                {/* Description */}
+                <div>
+                  <label className="text-xs font-medium text-slate-600 mb-1.5 block">
+                    Description
+                  </label>
+                  <textarea
+                    name="description"
+                    value={formData.description || ""}
+                    onChange={handleChange}
+                    disabled={!isEditing}
+                    rows="4"
+                    className={`w-full px-4 py-2.5 rounded-xl text-sm outline-none transition-all resize-none ${
+                      isEditing
+                        ? "bg-slate-50 border border-slate-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                        : "bg-transparent border border-transparent text-slate-900"
+                    }`}
+                  />
+                </div>
               </div>
             </div>
           ) : (
-            // No Book Selected State
-            <div className="bg-white rounded-xl shadow h-full flex flex-col items-center justify-center py-12">
-              <Eye className="w-20 h-20 text-gray-300 mb-6" />
-              <h3 className="text-xl font-semibold text-gray-700 mb-2">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm h-[700px] flex flex-col items-center justify-center text-center p-12">
+              <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-6">
+                <Book className="w-10 h-10 text-slate-300" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-700 mb-2">
                 No Book Selected
               </h3>
-              <p className="text-gray-500 text-center mb-6 max-w-md">
-                Select a book from the list on the left to view and edit its
-                details
+              <p className="text-sm text-slate-500 max-w-md">
+                Select a book from the collection to view and edit its details.
               </p>
-              <div className="flex items-center gap-4">
-                <div className="text-center">
-                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                    <Search className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <p className="text-sm text-gray-600">Search Books</p>
-                </div>
-                <div className="text-gray-400">→</div>
-                <div className="text-center">
-                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                    <Edit className="w-5 h-5 text-green-600" />
-                  </div>
-                  <p className="text-sm text-gray-600">Click to Edit</p>
-                </div>
-                <div className="text-gray-400">→</div>
-                <div className="text-center">
-                  <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                    <Save className="w-5 h-5 text-yellow-600" />
-                  </div>
-                  <p className="text-sm text-gray-600">Save Changes</p>
-                </div>
-              </div>
             </div>
           )}
         </div>

@@ -53,27 +53,27 @@ const LibrarianProfile = ({ user }) => {
   const getDesignationColor = (designation) => {
     switch (designation.toLowerCase()) {
       case "senior librarian":
-        return "bg-purple-100 text-purple-800";
+        return "app-tint";
       case "head librarian":
-        return "bg-red-100 text-red-800";
+        return "app-danger-tint";
       case "assistant librarian":
-        return "bg-blue-100 text-blue-800";
+        return "app-tint-strong";
       default:
-        return "bg-green-100 text-green-800";
+        return "app-success-tint";
     }
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+    <div className="soft-card overflow-hidden rounded-[2rem]">
       {/* Profile Header */}
       <div className="relative">
-        <div className="h-40 bg-gradient-to-r from-purple-600 to-pink-600"></div>
+        <div className="h-40 bg-gradient-to-r from-cyan-700 to-blue-700"></div>
 
         {/* Avatar Section */}
         <div className="absolute -bottom-16 left-1/2 transform -translate-x-1/2">
           <div className="relative">
             <div className="w-32 h-32 rounded-full bg-white p-2 shadow-2xl">
-              <div className="w-full h-full rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+              <div className="w-full h-full rounded-full bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center">
                 <UserCheck className="w-16 h-16 text-white" />
               </div>
             </div>
@@ -98,11 +98,11 @@ const LibrarianProfile = ({ user }) => {
             Library Staff • {librarianData.designation}
           </p>
           <div className="mt-3 flex items-center justify-center gap-3">
-            <span className="inline-flex items-center gap-1 px-3 py-1 bg-purple-50 text-purple-700 rounded-full text-sm">
+            <span className="app-tint inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm">
               <Award className="w-4 h-4" />
               Staff ID: {librarianData.staffId}
             </span>
-            <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm">
+            <span className="app-muted-tint inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm">
               <Clock className="w-4 h-4" />
               Shift: {librarianData.shiftTiming}
             </span>
@@ -111,9 +111,9 @@ const LibrarianProfile = ({ user }) => {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-purple-50 rounded-xl p-4 text-center">
+          <div className="app-accent-surface rounded-xl p-4 text-center">
             <div className="flex items-center justify-center gap-2 mb-2">
-              <BookOpen className="w-6 h-6 text-purple-600" />
+              <BookOpen className="w-6 h-6 text-cyan-700" />
             </div>
             <div className="text-2xl font-bold text-gray-800">
               {librarianData.totalIssuedBooks}
@@ -121,9 +121,9 @@ const LibrarianProfile = ({ user }) => {
             <div className="text-sm text-gray-600">Total Issued Books</div>
           </div>
 
-          <div className="bg-red-50 rounded-xl p-4 text-center">
+          <div className="app-warning-tint rounded-xl p-4 text-center">
             <div className="flex items-center justify-center gap-2 mb-2">
-              <Bell className="w-6 h-6 text-red-600" />
+              <Bell className="w-6 h-6 text-amber-700" />
             </div>
             <div className="text-2xl font-bold text-gray-800">
               {librarianData.totalDueBooks}
@@ -131,9 +131,9 @@ const LibrarianProfile = ({ user }) => {
             <div className="text-sm text-gray-600">Total Due Books</div>
           </div>
 
-          <div className="bg-green-50 rounded-xl p-4 text-center">
+          <div className="app-success-tint rounded-xl p-4 text-center">
             <div className="flex items-center justify-center gap-2 mb-2">
-              <DollarSign className="w-6 h-6 text-green-600" />
+              <DollarSign className="w-6 h-6 text-emerald-700" />
             </div>
             <div className="text-2xl font-bold text-gray-800">
               {librarianData.totalFines}
@@ -141,9 +141,9 @@ const LibrarianProfile = ({ user }) => {
             <div className="text-sm text-gray-600">Total Fines</div>
           </div>
 
-          <div className="bg-blue-50 rounded-xl p-4 text-center">
+          <div className="app-muted-tint rounded-xl p-4 text-center">
             <div className="flex items-center justify-center gap-2 mb-2">
-              <Users className="w-6 h-6 text-blue-600" />
+              <Users className="w-6 h-6 text-slate-700" />
             </div>
             <div className="text-2xl font-bold text-gray-800">
               {librarianData.totalMembersAssisted}
@@ -224,32 +224,32 @@ const LibrarianProfile = ({ user }) => {
         </div>
 
         {/* Performance Metrics */}
-        <div className="mb-8 p-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl">
+        <div className="mb-8 rounded-2xl bg-gradient-to-r from-sky-50 to-slate-50 p-6">
           <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
             <TrendingUp className="w-5 h-5" />
             Performance Metrics
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center">
-              <div className="text-3xl font-bold text-purple-600">
+              <div className="text-3xl font-bold text-cyan-700">
                 {librarianData.efficiency}
               </div>
               <div className="text-sm text-gray-600">Efficiency</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-green-600">
+              <div className="text-3xl font-bold text-emerald-700">
                 {librarianData.activeBorrowings}
               </div>
               <div className="text-sm text-gray-600">Active Borrowings</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-blue-600">
+              <div className="text-3xl font-bold text-slate-700">
                 {librarianData.pendingReturns}
               </div>
               <div className="text-sm text-gray-600">Pending Returns</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-red-600">0</div>
+              <div className="text-3xl font-bold text-rose-600">0</div>
               <div className="text-sm text-gray-600">Complaints</div>
             </div>
           </div>
@@ -261,28 +261,28 @@ const LibrarianProfile = ({ user }) => {
             Library Management Tools
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <button className="flex flex-col items-center justify-center p-4 bg-purple-50 hover:bg-purple-100 rounded-xl transition">
-              <BookOpen className="w-8 h-8 text-purple-600 mb-2" />
+            <button className="app-accent-surface flex flex-col items-center justify-center rounded-xl p-4 transition">
+              <BookOpen className="mb-2 h-8 w-8 text-cyan-700" />
               <span className="font-medium text-gray-800">Issue Books</span>
               <span className="text-xs text-gray-500">Student checkout</span>
             </button>
 
-            <button className="flex flex-col items-center justify-center p-4 bg-green-50 hover:bg-green-100 rounded-xl transition">
-              <CheckCircle className="w-8 h-8 text-green-600 mb-2" />
+            <button className="app-success-tint flex flex-col items-center justify-center rounded-xl p-4 transition">
+              <CheckCircle className="mb-2 h-8 w-8 text-emerald-700" />
               <span className="font-medium text-gray-800">Accept Returns</span>
               <span className="text-xs text-gray-500">Process returns</span>
             </button>
 
-            <button className="flex flex-col items-center justify-center p-4 bg-blue-50 hover:bg-blue-100 rounded-xl transition">
-              <ClipboardCheck className="w-8 h-8 text-blue-600 mb-2" />
+            <button className="app-muted-tint flex flex-col items-center justify-center rounded-xl p-4 transition">
+              <ClipboardCheck className="mb-2 h-8 w-8 text-slate-700" />
               <span className="font-medium text-gray-800">
                 Manage Inventory
               </span>
               <span className="text-xs text-gray-500">Book stock</span>
             </button>
 
-            <button className="flex flex-col items-center justify-center p-4 bg-yellow-50 hover:bg-yellow-100 rounded-xl transition">
-              <Scan className="w-8 h-8 text-yellow-600 mb-2" />
+            <button className="app-warning-tint flex flex-col items-center justify-center rounded-xl p-4 transition">
+              <Scan className="mb-2 h-8 w-8 text-amber-700" />
               <span className="font-medium text-gray-800">Scan Item</span>
               <span className="text-xs text-gray-500">Quick scan</span>
             </button>

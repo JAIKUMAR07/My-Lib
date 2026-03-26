@@ -40,27 +40,27 @@ const StudentProfile = ({ user }) => {
   const getStatusColor = (status) => {
     switch (status.toLowerCase()) {
       case "active":
-        return "bg-green-100 text-green-800";
+        return "app-success-tint";
       case "suspended":
-        return "bg-red-100 text-red-800";
+        return "app-danger-tint";
       case "expired":
-        return "bg-yellow-100 text-yellow-800";
+        return "app-warning-tint";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "app-muted-tint";
     }
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+    <div className="soft-card overflow-hidden rounded-[2rem]">
       {/* Profile Header */}
       <div className="relative">
-        <div className="h-32 bg-gradient-to-r from-blue-600 to-purple-600"></div>
+        <div className="h-32 bg-gradient-to-r from-cyan-700 to-blue-700"></div>
 
         {/* Avatar Section */}
         <div className="absolute -bottom-16 left-1/2 transform -translate-x-1/2">
           <div className="relative">
             <div className="w-32 h-32 rounded-full bg-white p-2 shadow-2xl">
-              <div className="w-full h-full rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
+              <div className="w-full h-full rounded-full bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center">
                 <User className="w-16 h-16 text-white" />
               </div>
             </div>
@@ -83,7 +83,7 @@ const StudentProfile = ({ user }) => {
           </h1>
           <p className="text-gray-600">Student • {studentData.course}</p>
           <div className="mt-2">
-            <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm">
+            <span className="app-tint inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm">
               <Award className="w-4 h-4" />
               Library ID: {studentData.libraryId}
             </span>
@@ -92,9 +92,9 @@ const StudentProfile = ({ user }) => {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-blue-50 rounded-xl p-4 text-center">
+          <div className="app-accent-surface rounded-xl p-4 text-center">
             <div className="flex items-center justify-center gap-2 mb-2">
-              <BookOpen className="w-6 h-6 text-blue-600" />
+              <BookOpen className="w-6 h-6 text-cyan-700" />
             </div>
             <div className="text-2xl font-bold text-gray-800">
               {studentData.totalBooksBorrowed}
@@ -102,9 +102,9 @@ const StudentProfile = ({ user }) => {
             <div className="text-sm text-gray-600">Books Borrowed</div>
           </div>
 
-          <div className="bg-purple-50 rounded-xl p-4 text-center">
+          <div className="app-muted-tint rounded-xl p-4 text-center">
             <div className="flex items-center justify-center gap-2 mb-2">
-              <Clock className="w-6 h-6 text-purple-600" />
+              <Clock className="w-6 h-6 text-slate-700" />
             </div>
             <div className="text-2xl font-bold text-gray-800">
               {studentData.booksDueSoon}
@@ -112,9 +112,9 @@ const StudentProfile = ({ user }) => {
             <div className="text-sm text-gray-600">Due Soon</div>
           </div>
 
-          <div className="bg-green-50 rounded-xl p-4 text-center">
+          <div className="app-success-tint rounded-xl p-4 text-center">
             <div className="flex items-center justify-center gap-2 mb-2">
-              <CreditCard className="w-6 h-6 text-green-600" />
+              <CreditCard className="w-6 h-6 text-emerald-700" />
             </div>
             <div className="text-2xl font-bold text-gray-800">
               ₹{studentData.outstandingFines}
@@ -122,9 +122,9 @@ const StudentProfile = ({ user }) => {
             <div className="text-sm text-gray-600">Outstanding Fines</div>
           </div>
 
-          <div className="bg-yellow-50 rounded-xl p-4 text-center">
+          <div className="app-warning-tint rounded-xl p-4 text-center">
             <div className="flex items-center justify-center gap-2 mb-2">
-              <Calendar className="w-6 h-6 text-yellow-600" />
+              <Calendar className="w-6 h-6 text-amber-700" />
             </div>
             <div className="text-lg font-bold text-gray-800">Member Since</div>
             <div className="text-sm text-gray-600">{studentData.joinDate}</div>
@@ -219,15 +219,15 @@ const StudentProfile = ({ user }) => {
             Quick Actions
           </h3>
           <div className="flex flex-wrap gap-3">
-            <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition">
+            <button className="app-button-primary flex items-center gap-2 rounded-lg px-4 py-2 transition">
               <Book className="w-4 h-4" />
               Browse Books
             </button>
-            <button className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition">
+            <button className="app-button-secondary flex items-center gap-2 rounded-lg px-4 py-2 transition">
               <CreditCard className="w-4 h-4" />
               Pay Fines
             </button>
-            <button className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition">
+            <button className="app-button-secondary flex items-center gap-2 rounded-lg px-4 py-2 transition">
               <User className="w-4 h-4" />
               Edit Profile
             </button>
