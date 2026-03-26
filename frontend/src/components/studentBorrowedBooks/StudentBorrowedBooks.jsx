@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import toast from "react-hot-toast";
 import { BookOpen, Clock, AlertCircle, Search, RefreshCw } from "lucide-react";
 
 const StudentBorrowedBooks = () => {
@@ -110,12 +111,12 @@ const StudentBorrowedBooks = () => {
     if (!book) return;
 
     if (book.renewalCount >= book.maxRenewals) {
-      alert(`Maximum renewals (${book.maxRenewals}) reached for this book.`);
+      toast.error(`Maximum renewals (${book.maxRenewals}) reached.`);
       return;
     }
 
     if (book.fineAmount > 0) {
-      alert("Please clear outstanding fines before renewing.");
+      toast.error("Please clear outstanding fines before renewing.");
       return;
     }
 
@@ -139,10 +140,8 @@ const StudentBorrowedBooks = () => {
       )
     );
 
-    alert(
-      `Book renewed successfully! New due date: ${
-        newDueDate.toISOString().split("T")[0]
-      }`
+    toast.success(
+      `Book renewed. New due date: ${newDueDate.toISOString().split("T")[0]}`
     );
   };
 
@@ -412,6 +411,24 @@ const StudentBorrowedBooks = () => {
                                 : "-"}
                             </p>
                           </div>
+                        </div>
+
+                        <div className="mt-6 flex flex-wrap gap-3">
+                          <button
+                            type="button"
+                            onClick={() => handleRenew(book.id)}
+                            disabled={
+                              book.renewalCount >= book.maxRenewals ||
+                              book.fineAmount > 0
+                            }
+                            className="inline-flex items-center gap-2 rounded-full bg-cyan-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                          >
+                            <RefreshCw className="h-4 w-4" />
+                            Renew Book
+                          </button>
+                          <p className="self-center text-sm text-slate-500">
+                            Renewals used: {book.renewalCount}/{book.maxRenewals}
+                          </p>
                         </div>
                       </div>
                     </div>

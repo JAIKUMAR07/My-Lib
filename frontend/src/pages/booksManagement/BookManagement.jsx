@@ -57,8 +57,8 @@ const BookManagement = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-6">
-      {/* Header */}
+    <div className="page-shell px-4 md:px-6">
+      <div className="page-section rounded-[2rem] p-4 md:p-6">
       <div className="mb-8">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -176,6 +176,7 @@ const BookManagement = () => {
           {activeTab === "add" && <AddBook />}
           {activeTab === "edit" && <EditBook />}
         </div>
+      </div>
       </div>
     </div>
   );

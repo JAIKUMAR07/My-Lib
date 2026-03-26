@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import toast from "react-hot-toast";
 import { Wallet, Search, Receipt, Info, User, Check } from "lucide-react";
 
 const FinePayment = ({ users, setUsers, fineHistory, setFineHistory }) => {
@@ -48,17 +49,17 @@ const FinePayment = ({ users, setUsers, fineHistory, setFineHistory }) => {
 
   const handlePayFine = () => {
     if (!foundUser) {
-      alert("User not found!");
+      toast.error("User not found.");
       return;
     }
 
     if (finePaymentData.amount <= 0) {
-      alert("Please enter a valid amount");
+      toast.error("Please enter a valid amount.");
       return;
     }
 
     if (finePaymentData.amount > foundUser.outstandingFines) {
-      alert(
+      toast.error(
         `Amount exceeds outstanding fines (₹${foundUser.outstandingFines})`
       );
       return;
@@ -97,7 +98,7 @@ const FinePayment = ({ users, setUsers, fineHistory, setFineHistory }) => {
 
     // Reset form
     setFinePaymentData({ libId: "", amount: 0, remarks: "" });
-    alert("Fine payment processed successfully!");
+    toast.success("Fine payment processed successfully.");
   };
 
   return (

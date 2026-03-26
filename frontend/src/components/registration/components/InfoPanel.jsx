@@ -62,7 +62,7 @@ const InfoPanel = ({ registeredUsers }) => {
       </h3>
 
       <div className="space-y-4">
-        {steps.map((step, index) => (
+        {steps.map((step) => (
           <div key={step.number} className="flex items-start gap-3 group">
             <div
               className={`w-8 h-8 ${step.bgColor} rounded-full flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-110`}

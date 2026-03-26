@@ -3,7 +3,6 @@ import Layout from "../../components/layout/Layout";
 import { Trash } from "lucide-react";
 import { deleteFromCart } from "../../redux/cartSlice";
 import toast from "react-hot-toast";
-import { useEffect } from "react";
 
 const CartPage = () => {
   const cartItems = useSelector((state) => state.cart);
@@ -14,27 +13,26 @@ const CartPage = () => {
     toast.success("Remove From Save");
   };
 
-  useEffect(() => {
-    localStorage.setItem("cart", JSON.stringify(cartItems));
-  }, [cartItems]);
-
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-4xl font-bold tracking-tight text-gray-900 mb-8">
-          Saved Books
-        </h1>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      <div className="page-shell px-4 md:px-6">
+        <div className="page-section rounded-[2rem] px-4 py-8 md:px-8">
+          <h1 className="mb-2 text-4xl font-bold tracking-tight text-slate-900">
+            Saved Books
+          </h1>
+          <p className="mb-8 text-slate-600">
+            Your quick access list for books you want to revisit.
+          </p>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
           {cartItems.length > 0 ? (
             cartItems.map((item, index) => {
-              const { id, title, productImageUrl, description, category } =
-                item;
+              const { title, productImageUrl, description, category } = item;
               return (
                 <div
                   key={index}
-                  className="bg-white border border-gray-200 rounded-lg shadow-md overflow-hidden flex flex-col"
+                  className="soft-card overflow-hidden rounded-3xl flex flex-col"
                 >
-                  <div className="flex justify-center items-center h-[200px] bg-gray-100">
+                  <div className="flex h-[220px] items-center justify-center bg-slate-50 p-4">
                     <img
                       src={productImageUrl}
                       alt={title}
@@ -42,11 +40,11 @@ const CartPage = () => {
                     />
                   </div>
                   <div className="p-4 flex-grow">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-1">
+                    <h3 className="mb-1 text-lg font-semibold text-slate-800">
                       {title}
                     </h3>
-                    <p className="text-sm text-gray-600 mb-2">{category}</p>
-                    <p className="text-gray-700 mb-4">
+                    <p className="mb-2 text-sm text-slate-500">{category}</p>
+                    <p className="mb-4 text-slate-700">
                       {description.substring(0, 40)}
                     </p>
                     <button
@@ -61,10 +59,11 @@ const CartPage = () => {
               );
             })
           ) : (
-            <h1 className="col-span-full text-center text-xl font-medium text-gray-500">
+            <h1 className="col-span-full text-center text-xl font-medium text-slate-500">
               No saved books found
             </h1>
           )}
+        </div>
         </div>
       </div>
     </Layout>

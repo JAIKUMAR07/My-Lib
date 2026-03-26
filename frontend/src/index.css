@@ -1,5 +1,65 @@
 @import "tailwindcss";
 
+:root {
+  --brand-start: #0891b2;
+  --brand-end: #1d4ed8;
+  --page-bg: #f4f8fc;
+  --surface: rgba(255, 255, 255, 0.88);
+  --surface-strong: #ffffff;
+  --border-soft: rgba(148, 163, 184, 0.2);
+  --text-main: #0f172a;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background:
+    radial-gradient(circle at top left, rgba(224, 242, 254, 0.92), transparent 30%),
+    linear-gradient(180deg, #f8fbff 0%, var(--page-bg) 55%, #eef4fb 100%);
+  color: var(--text-main);
+}
+
+#root {
+  min-height: 100vh;
+}
+
+::selection {
+  background: rgba(8, 145, 178, 0.2);
+}
+
+.brand-gradient {
+  background-image: linear-gradient(135deg, var(--brand-start), var(--brand-end));
+}
+
+.brand-gradient-text {
+  background-image: linear-gradient(135deg, var(--brand-start), var(--brand-end));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.page-shell {
+  width: min(1200px, calc(100% - 1.5rem));
+  margin-inline: auto;
+}
+
+.page-section {
+  background: var(--surface);
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--border-soft);
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
+}
+
+.soft-card {
+  background: var(--surface-strong);
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.06);
+}
+
 /* Custom Animation Keyframes */
 @keyframes fadeIn {
   from {

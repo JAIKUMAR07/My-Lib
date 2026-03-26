@@ -1,12 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   CreditCard,
-  AlertCircle,
   CheckCircle,
   BookOpen,
   User,
   Calendar,
-  FileText,
   Clock,
 } from "lucide-react";
 
@@ -20,14 +18,6 @@ const PaymentModal = ({
 }) => {
   const [isPayNow, setIsPayNow] = useState(false);
 
-  // Reset state when modal opens
-  useEffect(() => {
-    if (showPaymentModal) {
-      setIsPayNow(false); // Default to "Pay Later"
-      setPaymentAmount(0); // Default payment amount to 0 when "Pay Later" is active effectively
-    }
-  }, [showPaymentModal, setPaymentAmount]);
-
   // Handle Pay Now toggling
   const handlePaymentModeChange = (mode) => {
     if (mode === "now") {
@@ -40,7 +30,7 @@ const PaymentModal = ({
       }
     } else {
       setIsPayNow(false);
-      setPaymentAmount(0); // Reset payment if paying later
+      setPaymentAmount(0);
     }
   };
 

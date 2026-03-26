@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Key,
   Lock,
@@ -25,12 +25,7 @@ const PasswordGenerator = ({ password, onPasswordChange }) => {
     if (!password) {
       onPasswordChange(DEFAULT_PASSWORD);
     }
-  }, []);
-
-  // Sync editable password with prop
-  useEffect(() => {
-    setEditablePassword(password || DEFAULT_PASSWORD);
-  }, [password]);
+  }, [onPasswordChange, password]);
 
   const copyPassword = async () => {
     const pwdToCopy = password || DEFAULT_PASSWORD;
@@ -198,7 +193,10 @@ const PasswordGenerator = ({ password, onPasswordChange }) => {
           ) : (
             <button
               type="button"
-              onClick={() => setIsEditing(true)}
+              onClick={() => {
+                setEditablePassword(currentPassword);
+                setIsEditing(true);
+              }}
               className="p-3 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors bg-white"
               title="Edit password"
             >

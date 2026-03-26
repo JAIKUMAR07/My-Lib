@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import toast from "react-hot-toast";
 import {
   ArrowRight,
   User,
@@ -40,19 +41,19 @@ const IssueBook = ({
     const book = books.find((b) => b.isbn === selectedBook);
 
     if (!user || !book) {
-      alert("Please select valid user and book");
+      toast.error("Please select a valid user and book.");
       return;
     }
 
     if (user.currentBorrowed >= user.maxBooksAllowed) {
-      alert(
+      toast.error(
         `User has reached maximum borrowing limit (${user.maxBooksAllowed} books)`
       );
       return;
     }
 
     if (book.availableCopies <= 0) {
-      alert("No copies available for this book");
+      toast.error("No copies are available for this book.");
       return;
     }
 
@@ -102,7 +103,7 @@ const IssueBook = ({
     setSelectedBook("");
     setDueDate("");
 
-    alert(
+    toast.success(
       `Book issued successfully! Transaction ID: ${newTransaction.transactionId}`
     );
   };

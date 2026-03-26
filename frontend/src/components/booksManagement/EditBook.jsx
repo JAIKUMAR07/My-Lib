@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Search,
   Edit,
@@ -263,13 +263,7 @@ const EditBook = () => {
           book.id === selectedBook.id ? { ...formData, id: book.id } : book
         )
       );
-      setSelectedBook(formData);
-      // Update filtered books as well
-      setFilteredBooks((prev) =>
-        prev.map((book) =>
-          book.id === selectedBook.id ? { ...formData, id: book.id } : book
-        )
-      );
+      setSelectedBook({ ...formData, id: selectedBook.id });
     } catch (error) {
       console.error("Error saving book:", error);
     }

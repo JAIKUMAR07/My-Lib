@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import toast from "react-hot-toast";
 import { Download, Printer, ChevronDown } from "lucide-react";
 import StatsOverview from "./components/StatsOverview";
 import TabNavigation from "./components/TabNavigation";
@@ -234,30 +235,13 @@ const BorrowerManagement = () => {
     if (!transaction) return;
 
     setReturnTransaction(transaction);
-    setPaymentAmount(transaction.fineAmount - transaction.paidAmount);
+    setPaymentAmount(0);
     setShowPaymentModal(true);
   };
 
   // Process Return Confirmation
   const processReturn = () => {
     if (!returnTransaction) return;
-
-    // Remove from borrowed books
-    const updatedBorrowed = borrowedBooks.map((b) =>
-      b.transactionId === returnTransaction.transactionId
-        ? {
-            ...b,
-            status: "returned",
-            returnDate: new Date().toISOString().split("T")[0],
-          } // Update status locally if needed or filter out
-        : b
-    );
-    // Actually, we usually move it to history and change status in borrowed list (or remove from borrowed list if borrowed list only shows active).
-    // Existing logic was keeping it in `borrowedBooks` but with status 'returned'?
-    // Let's check original code...
-    // Original code:
-    // setBorrowedBooks(borrowedBooks.map(b => b.transactionId === ... ? {...b, status: 'returned', ...} : b))
-    // AND setReturnHistory([...])
 
     setBorrowedBooks(
       borrowedBooks.map((b) =>
@@ -318,12 +302,12 @@ const BorrowerManagement = () => {
     setShowPaymentModal(false);
     setReturnTransaction(null);
     setPaymentAmount(0);
-    alert("Book returned successfully!");
+    toast.success("Book returned successfully.");
   };
 
   return (
-    <div className="flex-1 overflow-auto">
-      <div className="p-8">
+    <div className="page-shell px-4 md:px-6">
+      <div className="page-section p-4 rounded-[2rem] md:p-8">
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-800">

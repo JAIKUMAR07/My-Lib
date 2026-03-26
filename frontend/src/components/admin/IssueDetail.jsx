@@ -1,5 +1,5 @@
-import { useContext, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useContext } from "react";
+import { Link } from "react-router-dom";
 import myContext from "../../context/myContext";
 import Loader from "../loader/Loader";
 import toast from "react-hot-toast";
@@ -7,9 +7,6 @@ import toast from "react-hot-toast";
 const IssueDetail = () => {
   const context = useContext(myContext);
   const { loading, setLoading, getIssue, setGetIssueBooks } = context;
-
-  // navigate
-  const navigate = useNavigate();
 
   // Delete product
   const deleteBooks = async (id) => {

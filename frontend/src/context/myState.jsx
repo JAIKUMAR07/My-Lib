@@ -1,17 +1,13 @@
-import { useEffect, useState } from "react";
+import { useState, useCallback } from "react";
 import MyContext from "./myContext";
 
+// Dummy Timestamp for compatibility (defined at top to avoid reference errors)
+const Timestamp = {
+  now: () => new Date().toISOString(),
+  seconds: Date.now() / 1000,
+};
+
 function MyState({ children }) {
-  // Loading State
-  const [loading, setLoading] = useState(false);
-
-  // User State
-  const [getAllProduct, setGetAllProduct] = useState([]);
-  const [getAllOrder, setGetAllOrder] = useState([]);
-  const [getAllUser, setGetAllUser] = useState([]);
-  const [getIssue, setGetIssueBooks] = useState([]);
-
-  // Helper to persist data to localStorage
   const persistData = (key, data) => {
     localStorage.setItem(key, JSON.stringify(data));
   };
@@ -22,21 +18,22 @@ function MyState({ children }) {
     return data ? JSON.parse(data) : [];
   };
 
+  const [loading, setLoading] = useState(false);
+  const [getAllProduct, setGetAllProduct] = useState(() => loadData("products"));
+  const [getAllOrder, setGetAllOrder] = useState(() => loadData("orders"));
+  const [getAllUser, setGetAllUser] = useState(() => loadData("users"));
+  const [getIssue, setGetIssueBooks] = useState(() => loadData("issues"));
+
   /**========================================================================
    *                          GET All Product Function
    *========================================================================**/
-  const getAllProductFunction = () => {
-    setLoading(true);
+  const getAllProductFunction = useCallback(() => {
     try {
-      // Load from local storage or use default empty array
-      const products = loadData("products");
-      setGetAllProduct(products);
-      setLoading(false);
+      setGetAllProduct(loadData("products"));
     } catch (error) {
       console.log(error);
-      setLoading(false);
     }
-  };
+  }, []);
 
   // Function to add a product (for use in AddProductPage)
   const addProduct = (product) => {
@@ -51,7 +48,7 @@ function MyState({ children }) {
   // Function to update a product
   const updateProduct = (updatedProduct) => {
     const updatedProducts = getAllProduct.map((item) =>
-      item.id === updatedProduct.id ? updatedProduct : item
+      item.id === updatedProduct.id ? updatedProduct : item,
     );
     setGetAllProduct(updatedProducts);
     persistData("products", updatedProducts);
@@ -67,60 +64,35 @@ function MyState({ children }) {
   /**========================================================================
    *                           GET All Order Function
    *========================================================================**/
-  const getAllOrderFunction = () => {
-    setLoading(true);
+  const getAllOrderFunction = useCallback(() => {
     try {
-      const orders = loadData("orders");
-      setGetAllOrder(orders);
-      setLoading(false);
+      setGetAllOrder(loadData("orders"));
     } catch (error) {
       console.log(error);
-      setLoading(false);
     }
-  };
+  }, []);
 
   /**========================================================================
    *                          GET All User Function
    *========================================================================**/
-  const getAllUserFunction = () => {
-    setLoading(true);
+  const getAllUserFunction = useCallback(() => {
     try {
-      const users = loadData("users");
-      setGetAllUser(users);
-      setLoading(false);
+      setGetAllUser(loadData("users"));
     } catch (error) {
       console.log(error);
-      setLoading(false);
     }
-  };
+  }, []);
 
   /**========================================================================
    *                          GET Issued Books Function
    *========================================================================**/
 
-  const getIssueFunction = () => {
-    setLoading(true);
+  const getIssueFunction = useCallback(() => {
     try {
-      const issues = loadData("issues");
-      setGetIssueBooks(issues);
-      setLoading(false);
+      setGetIssueBooks(loadData("issues"));
     } catch (error) {
       console.log(error);
-      setLoading(false);
     }
-  };
-
-  // Dummy Timestamp for compatibility
-  const Timestamp = {
-    now: () => new Date().toISOString(),
-    seconds: Date.now() / 1000,
-  };
-
-  useEffect(() => {
-    getAllProductFunction();
-    getAllOrderFunction();
-    getAllUserFunction();
-    getIssueFunction();
   }, []);
 
   return (

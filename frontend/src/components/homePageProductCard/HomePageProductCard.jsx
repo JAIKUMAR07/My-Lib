@@ -1,5 +1,5 @@
-import { useContext, useEffect } from "react";
-import { useNavigate } from "react-router";
+import { useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import myContext from "../../context/myContext";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
@@ -9,7 +9,7 @@ const HomePageProductCard = () => {
   const navigate = useNavigate();
 
   const context = useContext(myContext);
-  const { getAllProduct, getAllUser } = context;
+  const { getAllProduct } = context;
 
   const cartItems = useSelector((state) => state.cart || []); // Added fallback to prevent undefined
   const dispatch = useDispatch();
@@ -24,72 +24,71 @@ const HomePageProductCard = () => {
     toast.success("Removed from Save");
   };
 
-  useEffect(() => {
-    localStorage.setItem("cart", JSON.stringify(cartItems));
-  }, [cartItems]);
-
   return (
-    <div className="mt-10">
-      {/* Heading */}
-      <div>
-        <h1 className="text-center mb-5 text-2xl font-semibold">
-          Available In Library
-        </h1>
-      </div>
+    <div className="page-shell mt-10 px-4 md:px-6">
+      <div className="page-section rounded-[2rem] px-4 py-8 md:px-8">
+        <div>
+          <h1 className="mb-2 text-center text-3xl font-semibold text-slate-900">
+            Available In Library
+          </h1>
+          <p className="mb-8 text-center text-slate-600">
+            Hand-picked highlights from the current catalog.
+          </p>
+        </div>
 
-      {/* Main */}
-      <section className="text-gray-600 body-font">
-        <div className="container px-5 py-5 mx-auto">
-          <div className="flex flex-wrap -m-4">
-            {getAllProduct.slice(0, 8).map((item, index) => {
-              const { id, title, productImageUrl, description } = item;
-              return (
-                <div key={index} className="p-4 w-full md:w-1/2 lg:w-1/4">
-                  <div className="h-full border border-gray-300 rounded-xl overflow-hidden shadow-md cursor-pointer flex flex-col justify-between">
-                    <div className="flex justify-center items-center h-[150px]">
-                      <img
-                        onClick={() => navigate(`/productinfo/${id}`)}
-                        className="object-contain h-full"
-                        src={productImageUrl}
-                        alt={title}
-                      />
-                    </div>
-                    <div className="p-6">
-                      <h2 className="tracking-widest text-xs title-font font-medium text-gray-400 mb-1">
-                        Nex-Lib
-                      </h2>
-                      <h1 className="title-font text-lg font-medium text-gray-900 mb-3">
-                        {title.substring(0, 25)}
-                      </h1>
-                      <h1 className="title-font text-lg font-medium text-gray-900 mb-3">
-                        {description.substring(0, 25)}
-                      </h1>
+        <section className="text-gray-600 body-font">
+          <div className="mx-auto px-2 py-2">
+            <div className="flex flex-wrap">
+              {getAllProduct.slice(0, 8).map((item, index) => {
+                const { id, title, productImageUrl, description } = item;
+                return (
+                  <div key={index} className="w-full p-3 sm:w-1/2 xl:w-1/4">
+                    <div className="soft-card h-full cursor-pointer overflow-hidden rounded-3xl transition duration-300 hover:-translate-y-1">
+                      <div className="flex h-[220px] items-center justify-center bg-slate-50 p-4">
+                        <img
+                          onClick={() => navigate(`/productinfo/${id}`)}
+                          className="h-full object-contain"
+                          src={productImageUrl}
+                          alt={title}
+                        />
+                      </div>
+                      <div className="p-6">
+                        <h2 className="mb-1 text-xs font-medium uppercase tracking-[0.25em] text-cyan-700">
+                          Nex-Lib
+                        </h2>
+                        <h1 className="mb-3 text-lg font-semibold text-slate-900">
+                          {title.substring(0, 25)}
+                        </h1>
+                        <p className="mb-4 text-sm leading-6 text-slate-600">
+                          {description.substring(0, 25)}
+                        </p>
 
-                      <div className="flex justify-center">
-                        {cartItems.some((p) => p.id === item.id) ? (
-                          <button
-                            onClick={() => deleteCart(item)}
-                            className="bg-red-700 hover:bg-blue-600 w-full text-white py-[4px] rounded-lg font-bold"
-                          >
-                            Remove from Save
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => addCart(item)}
-                            className="bg-cyan-600 hover:bg-blue-600 w-full text-white py-[4px] rounded-lg font-bold"
-                          >
-                            Save
-                          </button>
-                        )}
+                        <div className="flex justify-center">
+                          {cartItems.some((p) => p.id === item.id) ? (
+                            <button
+                              onClick={() => deleteCart(item)}
+                              className="w-full rounded-full bg-rose-500 py-2 text-sm font-bold text-white transition hover:bg-rose-600"
+                            >
+                              Remove from Save
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => addCart(item)}
+                              className="w-full rounded-full bg-cyan-600 py-2 text-sm font-bold text-white transition hover:bg-blue-600"
+                            >
+                              Save
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
     </div>
   );
 };
