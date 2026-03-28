@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { adjustStock } from "../../redux/booksSlice";
 import {
   Plus,
   Minus,
@@ -6,11 +8,9 @@ import {
   Download,
   Package,
   X,
-  MoreVertical,
   ChevronLeft,
   ChevronRight,
   Filter,
-  CheckCircle,
   AlertCircle,
   TrendingUp,
   BookOpen,
@@ -20,120 +20,11 @@ import {
 } from "lucide-react";
 
 const BookInventory = () => {
-  const [books, setBooks] = useState([
-    {
-      id: 1,
-      title: "Introduction to Algorithms",
-      author: "Thomas H. Cormen",
-      isbn: "978-0262033848",
-      category: "Computer Science",
-      total_copies: 25,
-      available_copies: 18,
-      borrowed_copies: 7,
-      status: "in-stock",
-    },
-    {
-      id: 2,
-      title: "Clean Code",
-      author: "Robert C. Martin",
-      isbn: "978-0132350884",
-      category: "Computer Science",
-      total_copies: 15,
-      available_copies: 5,
-      borrowed_copies: 10,
-      status: "in-stock",
-    },
-    {
-      id: 3,
-      title: "The Pragmatic Programmer",
-      author: "Andrew Hunt",
-      isbn: "978-0201616224",
-      category: "Computer Science",
-      total_copies: 20,
-      available_copies: 0,
-      borrowed_copies: 20,
-      status: "out-of-stock",
-    },
-    {
-      id: 4,
-      title: "Design Patterns",
-      author: "Erich Gamma",
-      isbn: "978-0201633610",
-      category: "Computer Science",
-      total_copies: 12,
-      available_copies: 12,
-      borrowed_copies: 0,
-      status: "in-stock",
-    },
-    {
-      id: 5,
-      title: "Structure and Interpretation",
-      author: "Harold Abelson",
-      isbn: "978-0262510875",
-      category: "Computer Science",
-      total_copies: 10,
-      available_copies: 0,
-      borrowed_copies: 10,
-      status: "out-of-stock",
-    },
-    {
-      id: 6,
-      title: "Code Complete",
-      author: "Steve McConnell",
-      isbn: "978-0735619678",
-      category: "Software Engineering",
-      total_copies: 8,
-      available_copies: 6,
-      borrowed_copies: 2,
-      status: "in-stock",
-    },
-    {
-      id: 7,
-      title: "The Art of Computer Programming",
-      author: "Donald Knuth",
-      isbn: "978-0201896831",
-      category: "Computer Science",
-      total_copies: 5,
-      available_copies: 3,
-      borrowed_copies: 2,
-      status: "in-stock",
-    },
-    {
-      id: 8,
-      title: "Artificial Intelligence",
-      author: "Stuart Russell",
-      isbn: "978-0136042594",
-      category: "Computer Science",
-      total_copies: 15,
-      available_copies: 0,
-      borrowed_copies: 15,
-      status: "out-of-stock",
-    },
-    {
-      id: 9,
-      title: "Database Systems",
-      author: "Hector Garcia-Molina",
-      isbn: "978-0131873254",
-      category: "Database",
-      total_copies: 12,
-      available_copies: 8,
-      borrowed_copies: 4,
-      status: "in-stock",
-    },
-    {
-      id: 10,
-      title: "Computer Networks",
-      author: "Andrew Tanenbaum",
-      isbn: "978-0132126953",
-      category: "Networking",
-      total_copies: 10,
-      available_copies: 7,
-      borrowed_copies: 3,
-      status: "in-stock",
-    },
-  ]);
+  const dispatch = useDispatch();
+  const books = useSelector((state) => state.books.items);
+  const categories = useSelector((state) => state.books.categories);
 
-  const [selectedBook, setSelectedBook] = useState(null);
+  const [selectedBookId, setSelectedBookId] = useState(null);
   const [stockAdjustment, setStockAdjustment] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -141,46 +32,14 @@ const BookInventory = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const booksPerPage = 6;
 
-  const categories = [...new Set(books.map((book) => book.category))];
+  const selectedBook = books.find(b => b.id === selectedBookId);
 
   const handleStockIncrease = (bookId, amount) => {
-    setBooks((prev) =>
-      prev.map((book) => {
-        if (book.id === bookId) {
-          const newTotal = book.total_copies + amount;
-          const newAvailable = book.available_copies + amount;
-          const updatedBook = {
-            ...book,
-            total_copies: newTotal,
-            available_copies: newAvailable,
-            status: newAvailable > 0 ? "in-stock" : "out-of-stock",
-          };
-          if (selectedBook?.id === bookId) setSelectedBook(updatedBook);
-          return updatedBook;
-        }
-        return book;
-      })
-    );
+    dispatch(adjustStock({ id: bookId, delta: amount }));
   };
 
   const handleStockDecrease = (bookId, amount) => {
-    setBooks((prev) =>
-      prev.map((book) => {
-        if (book.id === bookId && book.available_copies >= amount) {
-          const newTotal = Math.max(0, book.total_copies - amount);
-          const newAvailable = Math.max(0, book.available_copies - amount);
-          const updatedBook = {
-            ...book,
-            total_copies: newTotal,
-            available_copies: newAvailable,
-            status: newAvailable > 0 ? "in-stock" : "out-of-stock",
-          };
-          if (selectedBook?.id === bookId) setSelectedBook(updatedBook);
-          return updatedBook;
-        }
-        return book;
-      })
-    );
+    dispatch(adjustStock({ id: bookId, delta: -amount }));
   };
 
   const getStatusColor = (status) => {
@@ -263,8 +122,8 @@ const BookInventory = () => {
                   {paginatedBooks.map((book) => (
                     <tr 
                       key={book.id} 
-                      onClick={() => setSelectedBook(book)}
-                      className={`group hover:bg-slate-50 transition-colors cursor-pointer ${selectedBook?.id === book.id ? 'bg-cyan-50/50' : ''}`}
+                      onClick={() => setSelectedBookId(book.id)}
+                      className={`group hover:bg-slate-50 transition-colors cursor-pointer ${selectedBookId === book.id ? 'bg-cyan-50/50' : ''}`}
                     >
                       <td className="py-5 px-6">
                         <div className="flex items-center gap-4">
@@ -334,7 +193,7 @@ const BookInventory = () => {
                   </div>
                   <h3 className="text-sm font-bold text-slate-800">Adjust Stock</h3>
                 </div>
-                <button onClick={() => setSelectedBook(null)} className="p-2 text-slate-400 hover:bg-slate-100 rounded-full transition-all">
+                <button onClick={() => setSelectedBookId(null)} className="p-2 text-slate-400 hover:bg-slate-100 rounded-full transition-all">
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -361,7 +220,7 @@ const BookInventory = () => {
 
                 <div className="space-y-4">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Adjustment Delta</label>
-                  <div className="flex items-center gap-3 px-2 py-2 bg-slate-900 rounded-[2rem] shadow-inner">
+                  <div className="flex items-center gap-3 px-2 py-2 bg-slate-900 rounded-4xl shadow-inner">
                     <button 
                       onClick={() => handleStockDecrease(selectedBook.id, stockAdjustment)}
                       disabled={selectedBook.available_copies < stockAdjustment}
@@ -406,7 +265,7 @@ const BookInventory = () => {
                       ))}
                     </div>
                   </div>
-                  <button onClick={() => setSelectedBook(null)} className="p-4 text-slate-400 hover:text-slate-600 font-bold text-xs uppercase">Dismiss</button>
+                  <button onClick={() => setSelectedBookId(null)} className="p-4 text-slate-400 hover:text-slate-600 font-bold text-xs uppercase">Dismiss</button>
               </div>
             </div>
           </div>
@@ -421,7 +280,7 @@ const BookInventory = () => {
           { label: "Out of Cycles", value: books.filter(b => b.status === "out-of-stock").length, icon: AlertCircle, color: "rose" },
           { label: "Active Genres", value: categories.length, icon: TrendingUp, color: "amber" },
         ].map((stat, idx) => (
-          <div key={idx} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center justify-between group hover:border-cyan-200 transition-all">
+          <div key={idx} className="bg-white p-6 rounded-4xl border border-slate-100 shadow-sm flex items-center justify-between group hover:border-cyan-200 transition-all">
             <div className={`p-4 rounded-2xl bg-${stat.color}-50 border border-${stat.color}-100 transition-colors group-hover:bg-cyan-500 group-hover:border-cyan-400`}>
               <stat.icon className={`w-6 h-6 text-${stat.color}-600 transition-colors group-hover:text-white`} />
             </div>

@@ -1,810 +1,492 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { updateBook, deleteBook, addCategory, addLanguage } from "../../redux/booksSlice";
 import {
   Search,
-  Edit,
-  Save,
-  RotateCcw,
-  Book,
+  BookOpen,
   User,
-  ChevronRight,
-  ChevronLeft,
+  Hash,
+  Globe,
+  Layers,
+  Calendar,
+  Save,
+  Trash2,
   X,
-  Upload,
-  ChevronDown,
+  ChevronRight,
+  Filter,
   CheckCircle,
-  Loader2,
   AlertCircle,
-  List,
+  Clock,
+  ExternalLink,
+  Plus,
+  Loader2,
+  Sparkles,
 } from "lucide-react";
 
+/**
+ * EditBook Component
+ * Features: Book Discovery Sidebar + Unified Editor Workspace.
+ * Redesigned for a premium, stable, and professional library management experience.
+ */
 const EditBook = () => {
-  const [searchQuery, setSearchQuery] = useState("");
+  const dispatch = useDispatch();
+  const allBooks = useSelector((state) => state.books.items);
+  const availableCategories = useSelector((state) => state.books.categories);
+  const availableLanguages = useSelector((state) => state.books.languages);
+
   const [selectedBook, setSelectedBook] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({});
-  const [imagePreview, setImagePreview] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [form, setForm] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [isLoadingList, setIsLoadingList] = useState(false);
+  const [showStatus, setShowStatus] = useState(null); // { type: 'success' | 'error', message: string }
+  const [dropdowns, setDropdowns] = useState({ category: false, language: false });
+  const [searchTerms, setSearchTerms] = useState({ category: "", language: "" });
 
-  const [selectedCategory, setSelectedCategory] = useState("all");
-  const [currentPage, setCurrentPage] = useState(1);
-  const booksPerPage = 6;
-
-  const [categorySearch, setCategorySearch] = useState("");
-  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
-  const categoryRef = useRef(null);
-
-  const [languageSearch, setLanguageSearch] = useState("");
-  const [isLanguageOpen, setIsLanguageOpen] = useState(false);
-  const languageRef = useRef(null);
-
-  const [books, setBooks] = useState([
-    {
-      id: 1,
-      title: "Introduction to Algorithms",
-      author: "Thomas H. Cormen",
-      category: "Computer Science",
-      isbn: "978-0262033848",
-      description:
-        "A comprehensive guide to the modern study of computer algorithms with depth and rigor.",
-      publisher: "MIT Press",
-      edition: "3rd",
-      language: "English",
-      cover_image_url:
-        "https://images.unsplash.com/photo-1532012197267-da84d127e765?w=300&h=450&fit=crop",
-      total_copies: 25,
-      available_copies: 18,
-      status: "in-stock",
-    },
-    {
-      id: 2,
-      title: "Clean Code",
-      author: "Robert C. Martin",
-      category: "Computer Science",
-      isbn: "978-0132350884",
-      description: "A handbook of agile software craftsmanship.",
-      publisher: "Pearson",
-      edition: "1st",
-      language: "English",
-      cover_image_url:
-        "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=300&h=450&fit=crop",
-      total_copies: 15,
-      available_copies: 5,
-      status: "low-stock",
-    },
-    {
-      id: 3,
-      title: "The Pragmatic Programmer",
-      author: "Andrew Hunt, David Thomas",
-      category: "Computer Science",
-      isbn: "978-0201616224",
-      description: "From journeyman to master.",
-      publisher: "Addison-Wesley",
-      edition: "2nd",
-      language: "English",
-      cover_image_url:
-        "https://images.unsplash.com/photo-1516979187457-637abb4f9353?w=300&h=450&fit=crop",
-      total_copies: 20,
-      available_copies: 20,
-      status: "in-stock",
-    },
-  ]);
-
-  const [categories, setCategories] = useState([
-    "Computer Science",
-    "Mathematics",
-    "Physics",
-    "Story",
-    "Civil",
-    "Electronics",
-    "Mechanical",
-    "Engineering",
-    "Literature",
-  ]);
-
-  const [languages, setLanguages] = useState([
-    "English",
-    "Hindi",
-    "Spanish",
-    "French",
-    "German",
-    "Chinese",
-    "Japanese",
-  ]);
-
+  // Sync internal selectedBook with Redux state if it updates (e.g. from Inventory tab)
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (categoryRef.current && !categoryRef.current.contains(event.target)) {
-        setIsCategoryOpen(false);
+    if (selectedBook) {
+      const updated = allBooks.find(b => b.id === selectedBook.id);
+      if (updated) {
+        setSelectedBook(updated);
+        setForm(updated);
       }
-      if (languageRef.current && !languageRef.current.contains(event.target)) {
-        setIsLanguageOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    }
+  }, [allBooks]);
 
-  const filteredBooks = books.filter((book) => {
-    const matchesSearch =
-      searchQuery.trim() === "" ||
+  const filteredBooks = allBooks.filter(
+    (book) =>
       book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       book.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      book.isbn.includes(searchQuery);
-    const matchesCategory =
-      selectedCategory === "all" || book.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
-
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filteredBooks.length / booksPerPage),
+      book.isbn.includes(searchQuery)
   );
-  const startIndex = (currentPage - 1) * booksPerPage;
-  const paginatedBooks = filteredBooks.slice(
-    startIndex,
-    startIndex + booksPerPage,
-  );
-
-  const goToPage = (page) => {
-    if (page >= 1 && page <= totalPages) setCurrentPage(page);
-  };
 
   const handleBookSelect = (book) => {
     setSelectedBook(book);
-    setFormData(book);
-    setCategorySearch(book.category);
-    setLanguageSearch(book.language);
-    setImagePreview(book.cover_image_url);
-    setIsEditing(false);
-    setShowSuccess(false);
-  };
-
-  const handleEdit = () => {
-    setIsEditing(true);
-  };
-
-  const handleSave = async (e) => {
-    e.preventDefault();
-    setIsSaving(true);
-
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    setBooks((prev) =>
-      prev.map((book) =>
-        book.id === selectedBook.id ? { ...formData, id: book.id } : book,
-      ),
-    );
-    setSelectedBook({ ...formData, id: selectedBook.id });
-    setIsSaving(false);
-    setIsEditing(false);
-    setShowSuccess(true);
-
-    setTimeout(() => setShowSuccess(false), 3000);
-  };
-
-  const handleCancel = () => {
-    setFormData(selectedBook);
-    setCategorySearch(selectedBook.category);
-    setLanguageSearch(selectedBook.language);
-    setImagePreview(selectedBook?.cover_image_url || null);
-    setIsEditing(false);
+    setForm(book);
+    setShowStatus(null);
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const clearSelection = () => {
-    setSelectedBook(null);
-    setIsEditing(false);
-    setFormData({});
-    setCategorySearch("");
-    setLanguageSearch("");
-    setImagePreview(null);
-    setShowSuccess(false);
+  const handleSelectOption = (field, value) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+    setDropdowns((prev) => ({ ...prev, [field]: false }));
   };
 
-  const selectCategory = (cat) => {
-    setFormData((prev) => ({ ...prev, category: cat }));
-    setCategorySearch(cat);
-    setIsCategoryOpen(false);
-  };
-
-  const createNewCategory = () => {
-    if (categorySearch.trim()) {
-      const newCat = categorySearch.trim();
-      if (!categories.includes(newCat))
-        setCategories((prev) => [...prev, newCat]);
-      selectCategory(newCat);
+  const handleAddNewOption = (field) => {
+    const value = searchTerms[field].trim();
+    if (value) {
+      if (field === 'category') dispatch(addCategory(value));
+      if (field === 'language') dispatch(addLanguage(value));
+      handleSelectOption(field, value);
+      setSearchTerms((prev) => ({ ...prev, [field]: "" }));
     }
   };
 
-  const selectLanguage = (lang) => {
-    setFormData((prev) => ({ ...prev, language: lang }));
-    setLanguageSearch(lang);
-    setIsLanguageOpen(false);
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setIsSaving(true);
+
+    setTimeout(() => {
+      dispatch(updateBook(form));
+      setIsSaving(false);
+      setShowStatus({ type: "success", message: "Volume metadata updated successfully." });
+      
+      setTimeout(() => setShowStatus(null), 3000);
+    }, 1200);
   };
 
-  const createNewLanguage = () => {
-    if (languageSearch.trim()) {
-      const newLang = languageSearch.trim();
-      if (!languages.includes(newLang))
-        setLanguages((prev) => [...prev, newLang]);
-      selectLanguage(newLang);
+  const handleDelete = () => {
+    if (window.confirm("Are you sure you want to remove this volume from the registry?")) {
+      dispatch(deleteBook(selectedBook.id));
+      setSelectedBook(null);
+      setForm(null);
     }
   };
-
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-        setFormData((prev) => ({ ...prev, cover_image_url: reader.result }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "in-stock":
-        return "bg-emerald-100 text-emerald-700";
-      case "low-stock":
-        return "bg-amber-100 text-amber-700";
-      case "out-of-stock":
-        return "bg-rose-100 text-rose-700";
-      default:
-        return "bg-slate-100 text-slate-700";
-    }
-  };
-
-  const filteredCategories = categories.filter((cat) =>
-    cat.toLowerCase().includes(categorySearch.toLowerCase()),
-  );
-
-  const exactMatchCategory = categories.find(
-    (cat) => cat.toLowerCase() === categorySearch.toLowerCase(),
-  );
-
-  const filteredLanguages = languages.filter((lang) =>
-    lang.toLowerCase().includes(languageSearch.toLowerCase()),
-  );
-
-  const exactMatchLanguage = languages.find(
-    (lang) => lang.toLowerCase() === languageSearch.toLowerCase(),
-  );
 
   return (
-    <div className="max-w-7xl mx-auto py-8 px-6">
-      {/* Page Header */}
-      <div className="mb-12 flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-3 rounded-xl bg-amber-100 border border-amber-200">
-              <Edit className="w-6 h-6 text-amber-600" />
-            </div>
-            <div>
-              <h2 className="text-3xl font-bold text-slate-900">
-                Book Record <span className="text-amber-600">Editor</span>
-              </h2>
-              <p className="text-slate-500 text-sm mt-1 max-w-xl">
-                Modify catalog parameters and adjust availability labels within
-                the master repository.
-              </p>
+    <div className="flex flex-col lg:flex-row gap-8 min-h-[800px] animate-fadeIn">
+      {/* Sidebar: Book Discovery */}
+      <div className="lg:w-1/3 flex flex-col gap-6">
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[800px]">
+          <div className="p-6 border-b border-slate-100 bg-slate-50/50">
+            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+              <Filter className="w-4 h-4" /> Discovery Sidebar
+            </h3>
+            <div className="relative group">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-cyan-600 transition-colors w-4 h-4" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search index..."
+                className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-2xl text-sm outline-none focus:border-cyan-400 focus:ring-4 focus:ring-cyan-500/5 transition-all font-medium"
+              />
             </div>
           </div>
-        </div>
-        <div className="flex gap-4">
-          <div className="px-5 py-2.5 bg-amber-50 rounded-xl border border-amber-100 flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-            <span className="text-[10px] font-semibold text-amber-700 uppercase tracking-wide">
-              Master Editor Active
-            </span>
-          </div>
-        </div>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Discovery Sidebar */}
-        <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col h-[700px] overflow-hidden">
-          <div className="p-6 border-b border-slate-200 bg-slate-50/30">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="font-semibold text-slate-600 flex items-center gap-2 text-xs uppercase tracking-wider">
-                <List className="w-4 h-4" /> Collection
-              </h3>
-              <div className="px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-[10px] font-semibold text-slate-500">
-                {books.length} TOTAL
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search books..."
-                  className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:border-amber-400 focus:ring-2 focus:ring-amber-100 transition-all outline-none"
-                />
-              </div>
-
-              <div className="relative">
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => {
-                    setSelectedCategory(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-700 outline-none appearance-none cursor-pointer"
+          <div className="flex-1 overflow-y-auto no-scrollbar p-6 space-y-3">
+            {filteredBooks.length > 0 ? (
+              filteredBooks.map((book) => (
+                <div
+                  key={book.id}
+                  onClick={() => handleBookSelect(book)}
+                  className={`group p-4 rounded-2xl border transition-all cursor-pointer relative overflow-hidden ${
+                    selectedBook?.id === book.id
+                      ? "bg-cyan-50 border-cyan-200 shadow-md ring-1 ring-cyan-200"
+                      : "bg-white border-slate-100 hover:border-slate-300 hover:shadow-sm"
+                  }`}
                 >
-                  <option value="all">All Genres</option>
-                  {categories.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-              </div>
-            </div>
-          </div>
-
-          {/* Book List */}
-          <div className="flex-1 overflow-y-auto p-4">
-            {isLoadingList ? (
-              <div className="h-full flex flex-col items-center justify-center text-slate-400 gap-3">
-                <Loader2 className="w-8 h-8 animate-spin" />
-                <span className="text-xs font-medium">
-                  Loading collection...
-                </span>
-              </div>
-            ) : paginatedBooks.length > 0 ? (
-              <div className="space-y-3">
-                {paginatedBooks.map((book) => (
-                  <div
-                    key={book.id}
-                    onClick={() => handleBookSelect(book)}
-                    className={`p-4 cursor-pointer transition-all rounded-xl border-2 ${
-                      selectedBook?.id === book.id
-                        ? "bg-amber-50 border-amber-400 shadow-md"
-                        : "bg-white border-transparent hover:bg-slate-50 hover:border-slate-200"
-                    }`}
-                  >
-                    <div className="flex gap-3">
-                      <div className="w-12 h-16 rounded-lg overflow-hidden shrink-0 bg-slate-100">
-                        <img
-                          src={book.cover_image_url}
-                          alt={book.title}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4
-                          className={`font-semibold text-sm truncate ${selectedBook?.id === book.id ? "text-amber-700" : "text-slate-800"}`}
-                        >
-                          {book.title}
-                        </h4>
-                        <p className="text-xs text-slate-500 truncate mt-1 flex items-center gap-1">
-                          <User className="w-3 h-3" /> {book.author}
-                        </p>
-                        <div className="flex items-center gap-2 mt-2">
-                          <div
-                            className={`w-1.5 h-1.5 rounded-full ${book.status === "in-stock" ? "bg-emerald-500" : "bg-amber-500"}`}
-                          />
-                          <span className="text-[9px] font-mono text-slate-400">
-                            {book.isbn.slice(-8)}
-                          </span>
-                        </div>
+                  <div className="flex items-center gap-4 relative z-10">
+                    <div className="shrink-0 w-12 h-16 bg-slate-100 rounded-lg overflow-hidden border border-slate-200">
+                      <img
+                        src={book.image}
+                        alt=""
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className={`font-black text-sm truncate ${selectedBook?.id === book.id ? 'text-cyan-900' : 'text-slate-800'}`}>
+                        {book.title}
+                      </p>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate mt-0.5">
+                        {book.author}
+                      </p>
+                      <div className="flex items-center gap-2 mt-2">
+                         <span className="text-[9px] font-mono text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">
+                            {book.isbn.split('-').pop()}
+                         </span>
+                         <span className={`w-1.5 h-1.5 rounded-full ${book.available_copies > 0 ? 'bg-emerald-500' : 'bg-rose-500'}`} />
                       </div>
                     </div>
+                    <ChevronRight className={`w-4 h-4 transition-transform ${selectedBook?.id === book.id ? 'translate-x-1 text-cyan-500' : 'text-slate-200 group-hover:text-slate-400'}`} />
                   </div>
-                ))}
-              </div>
+                </div>
+              ))
             ) : (
-              <div className="h-full flex flex-col items-center justify-center text-slate-400 gap-3">
-                <AlertCircle className="w-10 h-10" />
-                <p className="text-xs font-medium text-center">
-                  No books match your search
+              <div className="h-full flex flex-col items-center justify-center text-center p-10 opacity-40">
+                <BookOpen className="w-12 h-12 text-slate-300 mb-4" />
+                <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">
+                  Null Result Index
                 </p>
               </div>
             )}
           </div>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="p-4 border-t border-slate-200 bg-slate-50/30">
-              <div className="flex items-center justify-between">
-                <p className="text-xs font-medium text-slate-500">
-                  Page {currentPage} of {totalPages}
-                </p>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => goToPage(currentPage - 1)}
-                    disabled={currentPage === 1}
-                    className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center disabled:opacity-40 hover:border-amber-400 transition-all"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => goToPage(currentPage + 1)}
-                    disabled={currentPage === totalPages}
-                    className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center disabled:opacity-40 hover:border-amber-400 transition-all"
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
+      </div>
 
-        {/* Editor Workspace */}
-        <div className="lg:col-span-8">
-          {selectedBook ? (
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden relative">
-              {/* Success Toast */}
-              {showSuccess && (
-                <div className="absolute top-4 right-4 z-50 animate-in fade-in slide-in-from-top-2 duration-300">
-                  <div className="px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center gap-2 shadow-lg">
-                    <CheckCircle className="w-4 h-4 text-emerald-600" />
-                    <span className="text-xs font-medium text-emerald-700">
-                      Record updated successfully
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {/* Header */}
-              <div className="p-6 border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div className="flex items-center gap-6">
-                  <div className="relative w-20 h-28 rounded-xl overflow-hidden shadow-md group">
-                    <img
-                      src={imagePreview}
-                      alt="Cover"
-                      className="w-full h-full object-cover"
-                    />
-                    {isEditing && (
-                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
-                        <label className="cursor-pointer p-2 bg-white/20 hover:bg-white/30 rounded-full transition-all">
-                          <Upload className="w-4 h-4 text-white" />
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleImageUpload}
-                            className="hidden"
-                          />
-                        </label>
-                      </div>
-                    )}
+      {/* Main Editor Workspace */}
+      <div className="flex-1">
+        {selectedBook ? (
+          <form onSubmit={handleSubmit} className="space-y-8 animate-fadeIn">
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-8 overflow-hidden relative">
+              <div className="flex items-center justify-between mb-10 pb-6 border-b border-slate-50">
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 bg-cyan-50 rounded-2xl flex items-center justify-center border border-cyan-100">
+                    <Sparkles className="w-8 h-8 text-cyan-600" />
                   </div>
                   <div>
-                    <div
-                      className={`inline-flex px-2.5 py-1 rounded-lg text-[10px] font-semibold uppercase mb-2 ${getStatusColor(formData.status)}`}
-                    >
-                      {formData.status?.replace("-", " ")}
-                    </div>
-                    <h3 className="text-xl font-bold text-slate-900 mb-1">
-                      {formData.title}
-                    </h3>
-                    <p className="text-sm text-slate-500 flex items-center gap-2">
-                      <User className="w-4 h-4" /> {formData.author}
+                    <h2 className="text-xl font-black text-slate-900 leading-tight">
+                      Volume Metadata Editor
+                    </h2>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">
+                      Resource UID: {selectedBook.id} / ISBN-13
                     </p>
                   </div>
                 </div>
+                
                 <div className="flex items-center gap-3">
-                  {!isEditing ? (
-                    <button
-                      onClick={handleEdit}
-                      className="px-6 py-2.5 bg-slate-900 text-white rounded-xl font-medium text-sm hover:bg-slate-800 transition-all flex items-center gap-2"
-                    >
-                      <Edit className="w-4 h-4" /> Modify Record
-                    </button>
-                  ) : (
-                    <>
-                      <button
-                        onClick={handleCancel}
-                        className="px-4 py-2.5 bg-slate-100 text-slate-600 rounded-xl font-medium text-sm hover:bg-slate-200 transition-all flex items-center gap-2"
-                      >
-                        <RotateCcw className="w-4 h-4" /> Cancel
-                      </button>
-                      <button
-                        onClick={handleSave}
-                        disabled={isSaving}
-                        className="px-6 py-2.5 bg-emerald-600 text-white rounded-xl font-medium text-sm hover:bg-emerald-700 transition-all flex items-center gap-2 disabled:opacity-70"
-                      >
-                        {isSaving ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <Save className="w-4 h-4" />
-                        )}
-                        {isSaving ? "Saving..." : "Save Changes"}
-                      </button>
-                    </>
-                  )}
                   <button
-                    onClick={clearSelection}
-                    className="p-2.5 text-slate-400 hover:text-rose-600 transition-all rounded-lg hover:bg-rose-50"
+                    type="button"
+                    onClick={handleDelete}
+                    className="p-4 bg-rose-50 border border-rose-100 text-rose-600 rounded-2xl hover:bg-rose-100 transition-all shadow-sm active:scale-95"
+                    title="Purge Volume"
                   >
-                    <X className="w-5 h-5" />
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSaving}
+                    className="flex items-center gap-3 px-8 py-4 bg-slate-900 border border-slate-950 text-white rounded-2xl text-sm font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg active:scale-95 disabled:opacity-50"
+                  >
+                    {isSaving ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Save className="w-4 h-4" />
+                    )}
+                    {isSaving ? "Syncing..." : "Commit Changes"}
                   </button>
                 </div>
               </div>
 
-              {/* Form */}
-              <div className="p-6 space-y-6">
-                {/* Core Information */}
-                <div>
-                  <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">
-                    Core Information
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="text-xs font-medium text-slate-600 mb-1.5 block">
-                        Book Title *
-                      </label>
-                      <input
-                        type="text"
-                        name="title"
-                        value={formData.title || ""}
-                        onChange={handleChange}
-                        disabled={!isEditing}
-                        className={`w-full px-4 py-2.5 rounded-xl text-sm font-medium outline-none transition-all ${
-                          isEditing
-                            ? "bg-slate-50 border border-slate-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
-                            : "bg-transparent border border-transparent text-slate-900"
-                        }`}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-slate-600 mb-1.5 block">
-                        Author *
-                      </label>
-                      <input
-                        type="text"
-                        name="author"
-                        value={formData.author || ""}
-                        onChange={handleChange}
-                        disabled={!isEditing}
-                        className={`w-full px-4 py-2.5 rounded-xl text-sm font-medium outline-none transition-all ${
-                          isEditing
-                            ? "bg-slate-50 border border-slate-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
-                            : "bg-transparent border border-transparent text-slate-900"
-                        }`}
-                      />
-                    </div>
-                  </div>
+              {showStatus && (
+                <div className={`mb-8 p-4 rounded-2xl border flex items-center gap-3 animate-fadeIn ${
+                  showStatus.type === "success" 
+                    ? "bg-emerald-50 border-emerald-100 text-emerald-700" 
+                    : "bg-rose-50 border-rose-100 text-rose-700"
+                }`}>
+                  <CheckCircle className="w-5 h-5 flex-shrink-0" />
+                  <p className="text-sm font-bold">{showStatus.message}</p>
                 </div>
+              )}
 
-                {/* Classification */}
-                <div>
-                  <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">
-                    Classification
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="relative" ref={categoryRef}>
-                      <label className="text-xs font-medium text-slate-600 mb-1.5 block">
-                        Category *
-                      </label>
-                      <div className="relative">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <EditorField
+                  icon={BookOpen}
+                  label="Primary Title"
+                  name="title"
+                  value={form.title}
+                  onChange={handleChange}
+                  required
+                />
+                <EditorField
+                  icon={User}
+                  label="Verified Author"
+                  name="author"
+                  value={form.author}
+                  onChange={handleChange}
+                  required
+                />
+                <EditorField
+                  icon={Hash}
+                  label="Universal ISBN-13"
+                  name="isbn"
+                  value={form.isbn}
+                  onChange={handleChange}
+                  required
+                />
+                <EditorField
+                  icon={Calendar}
+                  label="Publication Matrix Date"
+                  name="publishDate"
+                  type="date"
+                  value={form.publishDate}
+                  onChange={handleChange}
+                  required
+                />
+                
+                {/* Category Searchable+Creatable Select */}
+                <div className="space-y-3 relative">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">
+                    Classification Genre
+                  </label>
+                  <div className="relative">
+                    <div
+                      onClick={() =>
+                        setDropdowns((p) => ({ ...p, category: !p.category }))
+                      }
+                      className="flex items-center gap-3 w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm cursor-pointer hover:border-slate-300 transition-all"
+                    >
+                      <Layers className="w-4 h-4 text-cyan-600" />
+                      <span className="text-slate-800 font-medium">
+                        {form.category}
+                      </span>
+                    </div>
+
+                    {dropdowns.category && (
+                      <div className="absolute top-full left-0 w-full mt-2 bg-white border border-slate-200 rounded-3xl shadow-2xl z-50 p-2 animate-fadeIn">
                         <input
                           type="text"
-                          value={categorySearch}
-                          onChange={(e) => {
-                            setCategorySearch(e.target.value);
-                            setIsCategoryOpen(true);
-                          }}
-                          disabled={!isEditing}
-                          onFocus={() => setIsCategoryOpen(true)}
-                          className={`w-full px-4 py-2.5 rounded-xl text-sm font-medium outline-none transition-all pr-10 ${
-                            isEditing
-                              ? "bg-slate-50 border border-slate-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
-                              : "bg-transparent border border-transparent text-slate-900"
-                          }`}
+                          placeholder="Override current genre..."
+                          className="w-full p-3 bg-slate-50 border-none rounded-2xl text-sm outline-none mb-2"
+                          value={searchTerms.category}
+                          onChange={(e) =>
+                            setSearchTerms((p) => ({ ...p, category: e.target.value }))
+                          }
+                          autoFocus
                         />
-                        {isEditing && (
-                          <ChevronDown
-                            className={`absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 transition-transform ${isCategoryOpen ? "rotate-180" : ""}`}
-                          />
-                        )}
-                        {isCategoryOpen && isEditing && (
-                          <div className="absolute top-full left-0 w-full mt-2 bg-white rounded-xl shadow-lg border border-slate-200 z-50 overflow-hidden">
-                            <div className="max-h-48 overflow-y-auto">
-                              {filteredCategories.map((cat) => (
-                                <button
-                                  key={cat}
-                                  type="button"
-                                  onClick={() => selectCategory(cat)}
-                                  className="w-full text-left px-4 py-2.5 hover:bg-slate-50 text-sm text-slate-700 transition-colors"
-                                >
-                                  {cat}
-                                </button>
-                              ))}
-                            </div>
-                            {!exactMatchCategory && categorySearch.trim() && (
-                              <div className="p-3 border-t border-slate-200 bg-slate-50">
-                                <button
-                                  type="button"
-                                  onClick={createNewCategory}
-                                  className="w-full py-2 bg-slate-900 text-white rounded-lg text-xs font-medium hover:bg-slate-800 transition-all"
-                                >
-                                  + Create "{categorySearch}"
-                                </button>
+                        <div className="max-h-48 overflow-y-auto no-scrollbar">
+                          {availableCategories
+                            .filter((c) =>
+                              c.toLowerCase().includes(searchTerms.category.toLowerCase())
+                            )
+                            .map((cat) => (
+                              <div
+                                key={cat}
+                                onClick={() => handleSelectOption("category", cat)}
+                                className="px-4 py-2.5 hover:bg-slate-50 rounded-xl cursor-pointer text-sm font-medium text-slate-600 transition-colors"
+                              >
+                                {cat}
+                              </div>
+                            ))}
+                          {searchTerms.category &&
+                            !availableCategories.some(
+                              (c) => c.toLowerCase() === searchTerms.category.toLowerCase()
+                            ) && (
+                              <div
+                                onClick={() => handleAddNewOption("category")}
+                                className="px-4 py-2.5 bg-cyan-50 text-cyan-700 rounded-xl cursor-pointer text-sm font-bold flex items-center justify-between"
+                              >
+                                Add "{searchTerms.category}"
+                                <Plus className="w-4 h-4" />
                               </div>
                             )}
-                          </div>
-                        )}
+                        </div>
                       </div>
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-slate-600 mb-1.5 block">
-                        ISBN-13 *
-                      </label>
-                      <input
-                        type="text"
-                        name="isbn"
-                        value={formData.isbn || ""}
-                        onChange={handleChange}
-                        disabled={!isEditing}
-                        className={`w-full px-4 py-2.5 rounded-xl font-mono text-sm outline-none transition-all ${
-                          isEditing
-                            ? "bg-slate-50 border border-slate-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
-                            : "bg-transparent border border-transparent text-slate-900"
-                        }`}
-                      />
-                    </div>
+                    )}
                   </div>
                 </div>
 
-                {/* Catalog Details */}
-                <div>
-                  <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">
-                    Catalog Details
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="relative" ref={languageRef}>
-                      <label className="text-xs font-medium text-slate-600 mb-1.5 block">
-                        Language
-                      </label>
-                      <div className="relative">
-                        <input
-                          type="text"
-                          value={languageSearch}
-                          onChange={(e) => {
-                            setLanguageSearch(e.target.value);
-                            setIsLanguageOpen(true);
-                          }}
-                          disabled={!isEditing}
-                          onFocus={() => setIsLanguageOpen(true)}
-                          className={`w-full px-4 py-2.5 rounded-xl text-sm font-medium outline-none transition-all pr-10 ${
-                            isEditing
-                              ? "bg-slate-50 border border-slate-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
-                              : "bg-transparent border border-transparent text-slate-900"
-                          }`}
-                        />
-                        {isEditing && (
-                          <ChevronDown
-                            className={`absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 transition-transform ${isLanguageOpen ? "rotate-180" : ""}`}
-                          />
-                        )}
-                        {isLanguageOpen && isEditing && (
-                          <div className="absolute top-full left-0 w-full mt-2 bg-white rounded-xl shadow-lg border border-slate-200 z-50 overflow-hidden">
-                            <div className="max-h-48 overflow-y-auto">
-                              {filteredLanguages.map((lang) => (
-                                <button
-                                  key={lang}
-                                  type="button"
-                                  onClick={() => selectLanguage(lang)}
-                                  className="w-full text-left px-4 py-2.5 hover:bg-slate-50 text-sm text-slate-700"
-                                >
-                                  {lang}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-xs font-medium text-slate-600 mb-1.5 block">
-                          Copies
-                        </label>
-                        <input
-                          type="number"
-                          name="total_copies"
-                          value={formData.total_copies || 0}
-                          onChange={handleChange}
-                          disabled={!isEditing}
-                          className={`w-full px-4 py-2.5 rounded-xl text-sm font-medium outline-none transition-all ${
-                            isEditing
-                              ? "bg-slate-50 border border-slate-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
-                              : "bg-transparent border border-transparent text-slate-900"
-                          }`}
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs font-medium text-slate-600 mb-1.5 block">
-                          Edition
-                        </label>
-                        <input
-                          type="text"
-                          name="edition"
-                          value={formData.edition || ""}
-                          onChange={handleChange}
-                          disabled={!isEditing}
-                          className={`w-full px-4 py-2.5 rounded-xl text-sm font-medium outline-none transition-all ${
-                            isEditing
-                              ? "bg-slate-50 border border-slate-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
-                              : "bg-transparent border border-transparent text-slate-900"
-                          }`}
-                        />
-                      </div>
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className="text-xs font-medium text-slate-600 mb-1.5 block">
-                        Publisher
-                      </label>
-                      <input
-                        type="text"
-                        name="publisher"
-                        value={formData.publisher || ""}
-                        onChange={handleChange}
-                        disabled={!isEditing}
-                        className={`w-full px-4 py-2.5 rounded-xl text-sm font-medium outline-none transition-all ${
-                          isEditing
-                            ? "bg-slate-50 border border-slate-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
-                            : "bg-transparent border border-transparent text-slate-900"
-                        }`}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Description */}
-                <div>
-                  <label className="text-xs font-medium text-slate-600 mb-1.5 block">
-                    Description
+                {/* Language Searchable+Creatable Select */}
+                <div className="space-y-3 relative">
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">
+                    Publishing Dialect
                   </label>
-                  <textarea
-                    name="description"
-                    value={formData.description || ""}
-                    onChange={handleChange}
-                    disabled={!isEditing}
-                    rows="4"
-                    className={`w-full px-4 py-2.5 rounded-xl text-sm outline-none transition-all resize-none ${
-                      isEditing
-                        ? "bg-slate-50 border border-slate-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
-                        : "bg-transparent border border-transparent text-slate-900"
-                    }`}
-                  />
+                  <div className="relative">
+                    <div
+                      onClick={() =>
+                        setDropdowns((p) => ({ ...p, language: !p.language }))
+                      }
+                      className="flex items-center gap-3 w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm cursor-pointer hover:border-slate-300 transition-all"
+                    >
+                      <Globe className="w-4 h-4 text-cyan-600" />
+                      <span className="text-slate-800 font-medium">
+                        {form.language}
+                      </span>
+                    </div>
+
+                    {dropdowns.language && (
+                      <div className="absolute top-full left-0 w-full mt-2 bg-white border border-slate-200 rounded-3xl shadow-2xl z-50 p-2 animate-fadeIn">
+                        <input
+                          type="text"
+                          placeholder="Override current language..."
+                          className="w-full p-3 bg-slate-50 border-none rounded-2xl text-sm outline-none mb-2"
+                          value={searchTerms.language}
+                          onChange={(e) =>
+                            setSearchTerms((p) => ({ ...p, language: e.target.value }))
+                          }
+                          autoFocus
+                        />
+                        <div className="max-h-48 overflow-y-auto no-scrollbar">
+                          {availableLanguages
+                            .filter((l) =>
+                              l.toLowerCase().includes(searchTerms.language.toLowerCase())
+                            )
+                            .map((lang) => (
+                              <div
+                                key={lang}
+                                onClick={() => handleSelectOption("language", lang)}
+                                className="px-4 py-2.5 hover:bg-slate-50 rounded-xl cursor-pointer text-sm font-medium text-slate-600 transition-colors"
+                              >
+                                {lang}
+                              </div>
+                            ))}
+                          {searchTerms.language &&
+                            !availableLanguages.some(
+                              (l) => l.toLowerCase() === searchTerms.language.toLowerCase()
+                            ) && (
+                              <div
+                                onClick={() => handleAddNewOption("language")}
+                                className="px-4 py-2.5 bg-cyan-50 text-cyan-700 rounded-xl cursor-pointer text-sm font-bold flex items-center justify-between"
+                              >
+                                Add "{searchTerms.language}"
+                                <Plus className="w-4 h-4" />
+                              </div>
+                            )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
+
+                <EditorField
+                  icon={Layers}
+                  label="Global Registry Stock"
+                  name="total_copies"
+                  type="number"
+                  value={form.total_copies}
+                  onChange={handleChange}
+                  required
+                />
+                <EditorField
+                  icon={Layers}
+                  label="Local Usable Pool"
+                  name="available_copies"
+                  type="number"
+                  value={form.available_copies}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              <div className="mt-8 space-y-3">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2 block">
+                  Bibliographic Summary
+                </label>
+                <textarea
+                  name="description"
+                  rows="4"
+                  value={form.description || ""}
+                  onChange={handleChange}
+                  placeholder="The current description is null. Provide professional abstract here..."
+                  className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-[2rem] text-sm focus:border-cyan-500 transition-all outline-none resize-none font-medium h-40"
+                />
+              </div>
+
+              <div className="mt-8 flex items-center gap-6 p-6 bg-slate-50 rounded-[2.5rem] border border-slate-100">
+                  <div className="w-20 h-28 bg-white rounded-xl shadow-md border border-slate-200 overflow-hidden shrink-0">
+                    <img src={form.image} alt="" className="w-full h-full object-cover" />
+                  </div>
+                  <div className="flex-1 space-y-4">
+                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2 block">Media Source URI</label>
+                     <input
+                        type="url"
+                        name="image"
+                        value={form.image}
+                        onChange={handleChange}
+                        className="w-full px-5 py-3 bg-white border border-slate-100 rounded-xl text-xs font-mono outline-none focus:border-cyan-500"
+                        placeholder="https://images.unsplash.com/..."
+                     />
+                  </div>
               </div>
             </div>
-          ) : (
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm h-[700px] flex flex-col items-center justify-center text-center p-12">
-              <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-6">
-                <Book className="w-10 h-10 text-slate-300" />
-              </div>
-              <h3 className="text-xl font-bold text-slate-700 mb-2">
-                No Book Selected
-              </h3>
-              <p className="text-sm text-slate-500 max-w-md">
-                Select a book from the collection to view and edit its details.
-              </p>
+          </form>
+        ) : (
+          <div className="h-full min-h-[600px] flex flex-col items-center justify-center text-center p-20 bg-white/40 border-2 border-dashed border-slate-200 rounded-4xl group hover:bg-white/60 transition-all">
+            <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500 shadow-inner">
+               <Loader2 className="w-10 h-10 text-slate-200" />
             </div>
-          )}
-        </div>
+            <h3 className="text-2xl font-black text-slate-900 mb-2">Editor Inactive</h3>
+            <p className="text-slate-400 max-w-sm font-bold text-sm uppercase tracking-widest leading-loose">
+              Select a volume from the discovery sidebar to initiate the synchronization workspace.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
 };
+
+const EditorField = ({
+  icon: Icon,
+  label,
+  name,
+  type = "text",
+  value,
+  onChange,
+  required = false,
+}) => (
+  <div className="space-y-3">
+    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2 block">
+      {label}
+    </label>
+    <div className="relative group">
+      <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-cyan-600 transition-colors">
+        <Icon className="w-4 h-4" />
+      </div>
+      <input
+        type={type}
+        name={name}
+        value={value}
+        onChange={onChange}
+        required={required}
+        className="w-full pl-12 pr-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-slate-900 focus:bg-white focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/5 transition-all outline-none"
+      />
+    </div>
+  </div>
+);
 
 export default EditBook;

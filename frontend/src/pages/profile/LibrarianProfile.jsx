@@ -18,279 +18,198 @@ import {
   BarChart3,
   Package,
   Scan,
-  DollarSign, // Added for fines
+  DollarSign,
+  Zap,
+  ChevronRight,
+  LogOut,
 } from "lucide-react";
 
+/**
+ * LibrarianProfile Component
+ * Redesigned as an operational dashboard for the library's frontline guardians.
+ * Features: High-density performance metrics, quick operational tools, and a premium identity card layout.
+ */
 const LibrarianProfile = ({ user }) => {
   // Mock data - replace with actual user data
   const librarianData = {
-    fullName: user?.full_name || user?.name || "Librarian Name",
-    email: user?.email || "librarian@library.com",
-    phone: user?.phone || "+91 9876543210",
-    staffId: user?.staff_id || "LIB-001",
-    designation: user?.designation || "Senior Librarian",
-    shiftTiming: user?.shift_timing || "9:00 AM - 5:00 PM",
-    address: user?.address || "Library Building, Room 101",
+    fullName: user?.full_name || user?.name || "Emma Richardson",
+    email: user?.email || "emma.r@nexlib.cloud",
+    phone: user?.phone || "+91 99000 99000",
+    staffId: user?.staff_id || "NX-LIB-409",
+    designation: user?.designation || "Senior Operational Librarian",
+    shiftTiming: user?.shift_timing || "09:00 - 17:00",
+    address: "Operational Hub, Wing B, Floor 4",
     joinDate: user?.created_at
       ? new Date(user.created_at).toLocaleDateString()
-      : "2023-03-10",
+      : "MAR 2024",
 
-    // New Stats for Overview
+    // Stats
     totalIssuedBooks: 5432,
     totalDueBooks: 287,
-    totalFines: "$1250",
+    totalFines: "1,250",
     totalMembersAssisted: 1234,
-
-    // Performance Metrics (kept as they were not specified for removal)
+    efficiency: "94.2%",
     activeBorrowings: 156,
     pendingReturns: 42,
-    efficiency: "94%",
-    shiftHours: "40 hrs/week", // Kept for Work Details
-    booksIssuedToday: 24, // Kept for Today's Activity Summary
-    booksReturnedToday: 18, // Kept for Today's Activity Summary
-  };
-
-  const getDesignationColor = (designation) => {
-    switch (designation.toLowerCase()) {
-      case "senior librarian":
-        return "app-tint";
-      case "head librarian":
-        return "app-danger-tint";
-      case "assistant librarian":
-        return "app-tint-strong";
-      default:
-        return "app-success-tint";
-    }
   };
 
   return (
-    <div className="soft-card overflow-hidden rounded-[2rem]">
-      {/* Profile Header */}
-      <div className="relative">
-        <div className="h-40 bg-gradient-to-r from-cyan-700 to-blue-700"></div>
+    <div className="bg-white rounded-4xl border border-slate-200 shadow-2xl overflow-hidden animate-fadeIn">
+      {/* Visual Identity Header */}
+      <div className="relative h-60">
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-800 to-slate-950">
+           <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
+           <div className="absolute top-0 right-0 w-80 h-80 bg-cyan-500/10 rounded-full blur-[100px]" />
+        </div>
 
-        {/* Avatar Section */}
-        <div className="absolute -bottom-16 left-1/2 transform -translate-x-1/2">
-          <div className="relative">
-            <div className="w-32 h-32 rounded-full bg-white p-2 shadow-2xl">
-              <div className="w-full h-full rounded-full bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center">
-                <UserCheck className="w-16 h-16 text-white" />
-              </div>
+        {/* Identity Section */}
+        <div className="absolute -bottom-16 left-8 md:left-12 flex items-end gap-6">
+            <div className="relative group">
+                <div className="w-32 h-32 md:w-36 md:h-36 rounded-3xl bg-white p-2 shadow-2xl">
+                    <div className="w-full h-full rounded-2xl bg-gradient-to-br from-emerald-500 to-cyan-600 flex items-center justify-center">
+                        <UserCheck className="w-14 h-14 text-white" />
+                    </div>
+                </div>
+                <div className="absolute -top-3 -right-3 w-8 h-8 bg-cyan-400 border-4 border-white rounded-full flex items-center justify-center">
+                   <Zap className="w-3 h-3 text-white fill-current" />
+                </div>
             </div>
-            <div
-              className={`absolute bottom-2 right-2 px-3 py-1 rounded-full text-xs font-bold ${getDesignationColor(
-                librarianData.designation
-              )}`}
-            >
-              {librarianData.designation.toUpperCase()}
+            
+            <div className="mb-4">
+                <h1 className="text-2xl md:text-3xl font-black text-white mb-1">{librarianData.fullName}</h1>
+                <p className="text-white/60 text-[10px] font-black uppercase tracking-[0.3em]">
+                   {librarianData.designation} • Personnel
+                </p>
             </div>
-          </div>
         </div>
       </div>
 
-      {/* Profile Info */}
-      <div className="pt-20 pb-8 px-6">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">
-            {librarianData.fullName}
-          </h1>
-          <p className="text-gray-600">
-            Library Staff • {librarianData.designation}
-          </p>
-          <div className="mt-3 flex items-center justify-center gap-3">
-            <span className="app-tint inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm">
-              <Award className="w-4 h-4" />
-              Staff ID: {librarianData.staffId}
-            </span>
-            <span className="app-muted-tint inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm">
-              <Clock className="w-4 h-4" />
-              Shift: {librarianData.shiftTiming}
-            </span>
-          </div>
+      <div className="pt-24 pb-12 px-8 md:px-12 grid grid-cols-1 lg:grid-cols-12 gap-12">
+        {/* Primary Data Pane */}
+        <div className="lg:col-span-8 space-y-12">
+            
+            {/* Rapid Metrics */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[
+                { label: "Checkouts", value: librarianData.totalIssuedBooks, icon: BookOpen, color: "cyan" },
+                { label: "Due Alerts", value: librarianData.totalDueBooks, icon: Bell, color: "rose" },
+                { label: "Recovered Fines", value: librarianData.totalFines, icon: DollarSign, color: "emerald" },
+                { label: "Efficiency", value: librarianData.efficiency, icon: TrendingUp, color: "blue" },
+              ].map((stat, i) => (
+                <div key={i} className="bg-slate-50 border border-slate-100 p-5 rounded-3xl group hover:border-cyan-200 transition-all">
+                    <div className={`w-8 h-8 rounded-lg bg-${stat.color}-500 flex items-center justify-center mb-3 shadow-lg shadow-${stat.color}-500/20 group-hover:scale-110 transition-transform`}>
+                        <stat.icon className="w-4 h-4 text-white" />
+                    </div>
+                    <div className="text-xl font-black text-slate-900 tabular-nums">{stat.value}</div>
+                    <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1 leading-tight">{stat.label}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Detailed Registry */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+               <div className="space-y-6">
+                  <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                     <ClipboardCheck className="w-4 h-4 text-cyan-600" /> Personnel Data
+                  </h3>
+                  <div className="space-y-3">
+                     <Field icon={Mail} label="Operational Email" value={librarianData.email} />
+                     <Field icon={Phone} label="Direct Link" value={librarianData.phone} />
+                     <Field icon={Award} label="Staff Identification" value={librarianData.staffId} />
+                  </div>
+               </div>
+
+               <div className="space-y-6">
+                  <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                     <Clock className="w-4 h-4 text-cyan-600" /> Duty Matrix
+                  </h3>
+                  <div className="space-y-3">
+                     <Field icon={MapPin} label="Work Station" value={librarianData.address} />
+                     <Field icon={Calendar} label="Service Start" value={librarianData.joinDate} />
+                     <Field icon={Clock} label="Operational Shift" value={librarianData.shiftTiming} />
+                  </div>
+               </div>
+            </div>
+
+            {/* Performance Analytics Zone */}
+            <div className="bg-slate-50 border border-slate-100 rounded-[2.5rem] p-8 flex flex-col md:flex-row items-center gap-8 group">
+               <div className="flex-1 space-y-2">
+                  <h3 className="text-sm font-black text-slate-900">Health index Summary</h3>
+                  <p className="text-xs text-slate-500 font-medium">Your current operational efficiency is above institutional benchmarks by 4.8%.</p>
+               </div>
+               <div className="flex items-center gap-6">
+                  <MetricRing value={librarianData.activeBorrowings} label="Active" color="cyan" />
+                  <MetricRing value={librarianData.pendingReturns} label="Pending" color="rose" />
+               </div>
+            </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="app-accent-surface rounded-xl p-4 text-center">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <BookOpen className="w-6 h-6 text-cyan-700" />
-            </div>
-            <div className="text-2xl font-bold text-gray-800">
-              {librarianData.totalIssuedBooks}
-            </div>
-            <div className="text-sm text-gray-600">Total Issued Books</div>
-          </div>
-
-          <div className="app-warning-tint rounded-xl p-4 text-center">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <Bell className="w-6 h-6 text-amber-700" />
-            </div>
-            <div className="text-2xl font-bold text-gray-800">
-              {librarianData.totalDueBooks}
-            </div>
-            <div className="text-sm text-gray-600">Total Due Books</div>
-          </div>
-
-          <div className="app-success-tint rounded-xl p-4 text-center">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <DollarSign className="w-6 h-6 text-emerald-700" />
-            </div>
-            <div className="text-2xl font-bold text-gray-800">
-              {librarianData.totalFines}
-            </div>
-            <div className="text-sm text-gray-600">Total Fines</div>
-          </div>
-
-          <div className="app-muted-tint rounded-xl p-4 text-center">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <Users className="w-6 h-6 text-slate-700" />
-            </div>
-            <div className="text-2xl font-bold text-gray-800">
-              {librarianData.totalMembersAssisted}
-            </div>
-            <div className="text-sm text-gray-600">Members Assisted</div>
-          </div>
-        </div>
-
-        {/* Personal Details Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          {/* Left Column */}
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-              <UserCheck className="w-5 h-5" />
-              Librarian Information
-            </h2>
-
-            <div className="space-y-3">
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <Mail className="w-5 h-5 text-gray-500" />
-                <div>
-                  <div className="text-sm text-gray-500">Email</div>
-                  <div className="font-medium">{librarianData.email}</div>
+        {/* Tactical Controls Pane */}
+        <div className="lg:col-span-4 space-y-8">
+            <div className="bg-white border border-slate-200 rounded-4xl p-8 sticky top-8 shadow-sm">
+                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-8">Operational Utility</h3>
+                
+                <div className="grid grid-cols-2 gap-3 mb-8">
+                   <ToolButton icon={BookOpen} label="Checkout" color="cyan" />
+                   <ToolButton icon={CheckCircle} label="Return" color="emerald" />
+                   <ToolButton icon={Package} label="Inventory" color="slate" />
+                   <ToolButton icon={Scan} label="Scan" color="blue" />
                 </div>
-              </div>
 
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <Phone className="w-5 h-5 text-gray-500" />
-                <div>
-                  <div className="text-sm text-gray-500">Phone</div>
-                  <div className="font-medium">{librarianData.phone}</div>
+                <div className="h-px bg-slate-100 my-8" />
+
+                <div className="space-y-3">
+                   <ActionButton icon={Bell} label="Dispatch Due Alert" primary />
+                   <ActionButton icon={ClipboardCheck} label="Operational Log" />
+                   <ActionButton icon={LogOut} label="Session Purge" danger />
                 </div>
-              </div>
-
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <Award className="w-5 h-5 text-gray-500" />
-                <div>
-                  <div className="text-sm text-gray-500">Staff ID</div>
-                  <div className="font-medium">{librarianData.staffId}</div>
-                </div>
-              </div>
             </div>
-          </div>
-
-          {/* Right Column */}
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-              <MapPin className="w-5 h-5" />
-              Work Details
-            </h2>
-
-            <div className="space-y-3">
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <MapPin className="w-5 h-5 text-gray-500" />
-                <div>
-                  <div className="text-sm text-gray-500">Address / Station</div>
-                  <div className="font-medium">{librarianData.address}</div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <Calendar className="w-5 h-5 text-gray-500" />
-                <div>
-                  <div className="text-sm text-gray-500">Member Since</div>
-                  <div className="font-medium">{librarianData.joinDate}</div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <Clock className="w-5 h-5 text-gray-500" />
-                <div>
-                  <div className="text-sm text-gray-500">Working Hours</div>
-                  <div className="font-medium">{librarianData.shiftHours}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Performance Metrics */}
-        <div className="mb-8 rounded-2xl bg-gradient-to-r from-sky-50 to-slate-50 p-6">
-          <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            <TrendingUp className="w-5 h-5" />
-            Performance Metrics
-          </h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-cyan-700">
-                {librarianData.efficiency}
-              </div>
-              <div className="text-sm text-gray-600">Efficiency</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-emerald-700">
-                {librarianData.activeBorrowings}
-              </div>
-              <div className="text-sm text-gray-600">Active Borrowings</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-slate-700">
-                {librarianData.pendingReturns}
-              </div>
-              <div className="text-sm text-gray-600">Pending Returns</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-rose-600">0</div>
-              <div className="text-sm text-gray-600">Complaints</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Librarian Actions */}
-        <div className="mt-8 pt-6 border-t border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">
-            Library Management Tools
-          </h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <button className="app-accent-surface flex flex-col items-center justify-center rounded-xl p-4 transition">
-              <BookOpen className="mb-2 h-8 w-8 text-cyan-700" />
-              <span className="font-medium text-gray-800">Issue Books</span>
-              <span className="text-xs text-gray-500">Student checkout</span>
-            </button>
-
-            <button className="app-success-tint flex flex-col items-center justify-center rounded-xl p-4 transition">
-              <CheckCircle className="mb-2 h-8 w-8 text-emerald-700" />
-              <span className="font-medium text-gray-800">Accept Returns</span>
-              <span className="text-xs text-gray-500">Process returns</span>
-            </button>
-
-            <button className="app-muted-tint flex flex-col items-center justify-center rounded-xl p-4 transition">
-              <ClipboardCheck className="mb-2 h-8 w-8 text-slate-700" />
-              <span className="font-medium text-gray-800">
-                Manage Inventory
-              </span>
-              <span className="text-xs text-gray-500">Book stock</span>
-            </button>
-
-            <button className="app-warning-tint flex flex-col items-center justify-center rounded-xl p-4 transition">
-              <Scan className="mb-2 h-8 w-8 text-amber-700" />
-              <span className="font-medium text-gray-800">Scan Item</span>
-              <span className="text-xs text-gray-500">Quick scan</span>
-            </button>
-          </div>
         </div>
       </div>
     </div>
   );
 };
+
+const Field = ({ icon: Icon, label, value }) => (
+    <div className="flex items-center gap-4 p-4 bg-slate-50/50 border border-slate-100 rounded-2xl group hover:bg-white transition-all shadow-sm">
+        <div className="p-3 bg-white rounded-xl text-slate-400 group-hover:text-cyan-600 transition-colors shadow-sm">
+            <Icon className="w-4 h-4" />
+        </div>
+        <div className="min-w-0">
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">{label}</p>
+            <p className="text-xs font-bold text-slate-700 truncate">{value}</p>
+        </div>
+    </div>
+);
+
+const MetricRing = ({ value, label, color }) => (
+    <div className="text-center">
+       <div className={`text-2xl font-black tabular-nums text-${color}-600`}>{value}</div>
+       <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{label}</div>
+    </div>
+);
+
+const ToolButton = ({ icon: Icon, label, color }) => (
+    <button className="flex flex-col items-center justify-center p-5 bg-slate-50 border border-slate-100 rounded-3xl hover:bg-white hover:border-cyan-400 hover:shadow-xl hover:shadow-cyan-900/5 transition-all group">
+       <div className={`p-3 rounded-xl bg-${color}-500 mb-3 shadow-lg shadow-${color}-500/20 group-hover:scale-110 transition-transform`}>
+          <Icon className="w-5 h-5 text-white" />
+       </div>
+       <span className="text-[10px] font-black text-slate-800 uppercase tracking-wider">{label}</span>
+    </button>
+);
+
+const ActionButton = ({ icon: Icon, label, primary, danger }) => (
+    <button className={`w-full flex items-center justify-between px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${
+        primary ? 'bg-slate-900 text-white hover:bg-slate-800' :
+        danger ? 'bg-rose-50 text-rose-600 border border-rose-100 hover:bg-rose-500 hover:text-white' :
+        'bg-white border border-slate-200 text-slate-600 hover:border-slate-400'
+    }`}>
+       <div className="flex items-center gap-3">
+          <Icon className="w-4 h-4" />
+          {label}
+       </div>
+       <ChevronRight className="w-4 h-4 opacity-30" />
+    </button>
+);
 
 export default LibrarianProfile;

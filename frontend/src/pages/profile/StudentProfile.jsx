@@ -11,231 +11,211 @@ import {
   Clock,
   Award,
   Shield,
-  MapPin, // MapPin is already imported for Department - can reuse
+  MapPin,
   GraduationCap,
+  Zap,
+  Star,
+  ArrowRight,
+  LogOut,
+  Edit3,
+  Bookmark,
 } from "lucide-react";
 
+/**
+ * StudentProfile Component
+ * Redesigned as a personal academic growth center for students.
+ * Features: High-end identity card, progress-focused stats, and a modern utility grid.
+ */
 const StudentProfile = ({ user }) => {
   // Mock data - replace with actual user data
   const studentData = {
-    fullName: user?.full_name || user?.name || "John Doe",
-    email: user?.email || "john@example.com",
-    rollNumber: user?.roll_number || "CS2023001",
-    phone: user?.phone || "+91 9876543210",
-    address: user?.address || "123 Library Lane, Bookville", // Added address
-    course: user?.course || "Computer Science",
-    department: user?.department || "Computer Science",
-    session: user?.session || "2022 - 2026", // Changed from yearSemester to session
-    membershipStatus: user?.membership_status || "active",
-    libraryId: user?.library_id || "LIB-STU-001",
+    fullName: user?.full_name || user?.name || "Jaikumar",
+    email: user?.email || "jai@university.edu",
+    rollNumber: user?.roll_number || "CS-2024-081",
+    phone: user?.phone || "+91 91090 91090",
+    address: "University Residency, Block 7, Room 302",
+    course: user?.course || "Masters in Computer Science",
+    department: user?.department || "School of Engineering",
+    session: user?.session || "2024 - 2026",
+    membershipStatus: user?.membership_status || "Premium",
+    libraryId: user?.library_id || "NX-STU-882",
     joinDate: user?.created_at
       ? new Date(user.created_at).toLocaleDateString()
-      : "2023-09-15",
+      : "SEP 2024",
     outstandingFines: user?.outstanding_fines || 0,
-    totalBooksBorrowed: 5,
-    booksDueSoon: 2,
-    favoriteGenre: "Computer Science",
-  };
-
-  const getStatusColor = (status) => {
-    switch (status.toLowerCase()) {
-      case "active":
-        return "app-success-tint";
-      case "suspended":
-        return "app-danger-tint";
-      case "expired":
-        return "app-warning-tint";
-      default:
-        return "app-muted-tint";
-    }
+    totalBooksBorrowed: 12,
+    booksDueSoon: 1,
+    favoriteGenre: "Systems Design",
   };
 
   return (
-    <div className="soft-card overflow-hidden rounded-[2rem]">
-      {/* Profile Header */}
-      <div className="relative">
-        <div className="h-32 bg-gradient-to-r from-cyan-700 to-blue-700"></div>
+    <div className="bg-white rounded-4xl border border-slate-200 shadow-2xl overflow-hidden animate-fadeIn">
+      {/* Identity Header */}
+      <div className="relative h-56">
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 to-violet-700">
+           <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/circuit-board.png')]" />
+           <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-white/10 rounded-full blur-3xl" />
+        </div>
 
-        {/* Avatar Section */}
-        <div className="absolute -bottom-16 left-1/2 transform -translate-x-1/2">
-          <div className="relative">
-            <div className="w-32 h-32 rounded-full bg-white p-2 shadow-2xl">
-              <div className="w-full h-full rounded-full bg-gradient-to-br from-cyan-600 to-blue-700 flex items-center justify-center">
-                <User className="w-16 h-16 text-white" />
-              </div>
+        {/* Identity Section */}
+        <div className="absolute -bottom-16 left-8 md:left-12 flex items-end gap-6">
+            <div className="relative group">
+                <div className="w-32 h-32 md:w-36 md:h-36 rounded-[2.5rem] bg-white p-2 shadow-2xl">
+                    <div className="w-full h-full rounded-[2rem] bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                        <User className="w-14 h-14 text-white" />
+                    </div>
+                </div>
+                <div className="absolute -top-3 -right-3 w-8 h-8 bg-amber-400 border-4 border-white rounded-full flex items-center justify-center shadow-lg">
+                   <Star className="w-3 h-3 text-white fill-current" />
+                </div>
             </div>
-            <div
-              className={`absolute bottom-2 right-2 px-3 py-1 rounded-full text-xs font-bold ${getStatusColor(
-                studentData.membershipStatus
-              )}`}
-            >
-              {studentData.membershipStatus.toUpperCase()}
+            
+            <div className="mb-4">
+                <div className="flex items-center gap-3 mb-1">
+                    <h1 className="text-2xl md:text-3xl font-black text-white">{studentData.fullName}</h1>
+                    <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[9px] font-black text-white uppercase tracking-widest border border-white/20">
+                       {studentData.membershipStatus}
+                    </span>
+                </div>
+                <p className="text-white/60 text-[10px] font-black uppercase tracking-[0.3em]">
+                   {studentData.course}
+                </p>
             </div>
-          </div>
+        </div>
+
+        {/* Floating ID Card */}
+        <div className="absolute top-8 right-8 hidden md:block">
+            <div className="bg-white/10 backdrop-blur-xl border border-white/20 p-4 rounded-3xl flex items-center gap-4 shadow-2xl">
+                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                   <Award className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                   <p className="text-[10px] font-black text-white/40 uppercase tracking-widest leading-none mb-1">Identity UID</p>
+                   <p className="text-xs font-black text-white">{studentData.libraryId}</p>
+                </div>
+            </div>
         </div>
       </div>
 
-      {/* Profile Info */}
-      <div className="pt-20 pb-8 px-6">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">
-            {studentData.fullName}
-          </h1>
-          <p className="text-gray-600">Student • {studentData.course}</p>
-          <div className="mt-2">
-            <span className="app-tint inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm">
-              <Award className="w-4 h-4" />
-              Library ID: {studentData.libraryId}
-            </span>
-          </div>
+      <div className="pt-24 pb-12 px-8 md:px-12 grid grid-cols-1 lg:grid-cols-12 gap-12">
+        {/* Academic Profile Pane */}
+        <div className="lg:col-span-8 space-y-12">
+            
+            {/* Achievement Metrics */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {[
+                { label: "Knowledge Assets", value: studentData.totalBooksBorrowed, icon: BookOpen, color: "indigo" },
+                { label: "Active Deadlines", value: studentData.booksDueSoon, icon: Clock, color: "rose" },
+                { label: "Financial Debit", value: `₹${studentData.outstandingFines}`, icon: CreditCard, color: "emerald" },
+                { label: "Member Since", value: studentData.joinDate.split('/')[2], icon: Calendar, color: "amber" },
+              ].map((stat, i) => (
+                <div key={i} className="bg-slate-50 border border-slate-100 p-6 rounded-[2rem] group hover:border-indigo-200 transition-all hover:bg-white hover:shadow-xl hover:shadow-indigo-900/5">
+                    <div className={`w-10 h-10 rounded-xl bg-${stat.color}-500 flex items-center justify-center mb-4 shadow-lg shadow-${stat.color}-500/20 group-hover:scale-110 transition-transform`}>
+                        <stat.icon className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="text-2xl font-black text-slate-900 tabular-nums">{stat.value}</div>
+                    <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1 leading-tight">{stat.label}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Information Matrices */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <div className="space-y-6">
+                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                        <User className="w-4 h-4 text-indigo-600" /> Bio-Metric Data
+                    </h3>
+                    <div className="space-y-4">
+                         <Row icon={Mail} label="Academic Email" value={studentData.email} />
+                         <Row icon={Phone} label="Contact Link" value={studentData.phone} />
+                         <Row icon={MapPin} label="Primary Residency" value={studentData.address} />
+                    </div>
+                </div>
+
+                <div className="space-y-6">
+                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                        <School className="w-4 h-4 text-indigo-600" /> Institution Matrix
+                    </h3>
+                    <div className="space-y-4">
+                         <Row icon={GraduationCap} label="Enrollment Degree" value={studentData.course} />
+                         <Row icon={MapPin} label="Faculty / Dept" value={studentData.department} />
+                         <Row icon={Clock} label="Academic Session" value={studentData.session} />
+                    </div>
+                </div>
+            </div>
+
+            {/* Personal Librarian Insight */}
+            <div className="bg-gradient-to-r from-slate-900 to-indigo-950 rounded-[2.5rem] p-10 relative overflow-hidden group">
+                 <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full -mr-32 -mt-32" />
+                 <div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
+                    <div className="w-16 h-16 rounded-2xl bg-indigo-500/20 flex items-center justify-center shrink-0">
+                       <Zap className="w-8 h-8 text-indigo-400" />
+                    </div>
+                    <div className="flex-1 text-center md:text-left">
+                       <h3 className="text-lg font-black text-white mb-2">Reading Velocity Check</h3>
+                       <p className="text-xs text-indigo-200/60 font-medium leading-relaxed">You've explored <span className="text-white font-bold">3 new volumes</span> this month. Your preferred classification is <span className="text-indigo-400 font-black uppercase tracking-widest text-[10px]">{studentData.favoriteGenre}</span>.</p>
+                    </div>
+                    <button className="px-8 py-4 bg-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] text-slate-900 hover:bg-slate-50 transition-all shadow-xl active:scale-95">
+                       View History
+                    </button>
+                 </div>
+            </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="app-accent-surface rounded-xl p-4 text-center">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <BookOpen className="w-6 h-6 text-cyan-700" />
-            </div>
-            <div className="text-2xl font-bold text-gray-800">
-              {studentData.totalBooksBorrowed}
-            </div>
-            <div className="text-sm text-gray-600">Books Borrowed</div>
-          </div>
-
-          <div className="app-muted-tint rounded-xl p-4 text-center">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <Clock className="w-6 h-6 text-slate-700" />
-            </div>
-            <div className="text-2xl font-bold text-gray-800">
-              {studentData.booksDueSoon}
-            </div>
-            <div className="text-sm text-gray-600">Due Soon</div>
-          </div>
-
-          <div className="app-success-tint rounded-xl p-4 text-center">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <CreditCard className="w-6 h-6 text-emerald-700" />
-            </div>
-            <div className="text-2xl font-bold text-gray-800">
-              ₹{studentData.outstandingFines}
-            </div>
-            <div className="text-sm text-gray-600">Outstanding Fines</div>
-          </div>
-
-          <div className="app-warning-tint rounded-xl p-4 text-center">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <Calendar className="w-6 h-6 text-amber-700" />
-            </div>
-            <div className="text-lg font-bold text-gray-800">Member Since</div>
-            <div className="text-sm text-gray-600">{studentData.joinDate}</div>
-          </div>
-        </div>
-
-        {/* Personal Details Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Left Column */}
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-              <User className="w-5 h-5" />
-              Personal Information
-            </h2>
-
-            <div className="space-y-3">
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <Mail className="w-5 h-5 text-gray-500" />
-                <div>
-                  <div className="text-sm text-gray-500">Email</div>
-                  <div className="font-medium">{studentData.email}</div>
+        {/* Quick Utility Pane */}
+        <div className="lg:col-span-4 space-y-8">
+            <div className="bg-slate-50 border border-slate-100 rounded-4xl p-8 sticky top-8">
+                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-8 text-center md:text-left">Personal Controls</h3>
+                
+                <div className="space-y-4">
+                    <UtilityLink icon={Book} label="Browse Repository" desc="Access 12.5K volumes" accent="indigo" />
+                    <UtilityLink icon={Bookmark} label="Saved Archive" desc="View your collection" accent="purple" />
+                    <UtilityLink icon={CreditCard} label="Payment Portal" desc="Clear debit balance" accent="rose" />
                 </div>
-              </div>
 
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <Phone className="w-5 h-5 text-gray-500" />
-                <div>
-                  <div className="text-sm text-gray-500">Phone</div>
-                  <div className="font-medium">{studentData.phone}</div>
-                </div>
-              </div>
+                <div className="h-px bg-slate-200 my-10" />
 
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <Shield className="w-5 h-5 text-gray-500" />
-                <div>
-                  <div className="text-sm text-gray-500">Roll Number</div>
-                  <div className="font-medium">{studentData.rollNumber}</div>
+                <div className="space-y-3">
+                   <button className="w-full py-4 bg-slate-900 border border-slate-950 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center justify-center gap-3 group shadow-xl shadow-slate-950/20">
+                      <Edit3 className="w-4 h-4" />
+                      Adjust Profile
+                      <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform opacity-40" />
+                   </button>
+                   <button className="w-full py-4 bg-white border border-slate-200 text-slate-600 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center justify-center gap-3 active:scale-95">
+                      <LogOut className="w-4 h-4" />
+                      Secure Terminate
+                   </button>
                 </div>
-              </div>
-
-              {/* Address Field */}
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <MapPin className="w-5 h-5 text-gray-500" />
-                <div>
-                  <div className="text-sm text-gray-500">Address</div>
-                  <div className="font-medium">{studentData.address}</div>
-                </div>
-              </div>
             </div>
-          </div>
-
-          {/* Right Column */}
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-              <School className="w-5 h-5" />
-              Academic Information
-            </h2>
-
-            <div className="space-y-3">
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <GraduationCap className="w-5 h-5 text-gray-500" />
-                <div>
-                  <div className="text-sm text-gray-500">Course</div>
-                  <div className="font-medium">{studentData.course}</div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <MapPin className="w-5 h-5 text-gray-500" />
-                <div>
-                  <div className="text-sm text-gray-500">Department</div>
-                  <div className="font-medium">{studentData.department}</div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <Calendar className="w-5 h-5 text-gray-500" />
-                <div>
-                  <div className="text-sm text-gray-500">Session</div>{" "}
-                  {/* Changed label */}
-                  <div className="font-medium">{studentData.session}</div>{" "}
-                  {/* Changed data source */}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="mt-8 pt-6 border-t border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">
-            Quick Actions
-          </h3>
-          <div className="flex flex-wrap gap-3">
-            <button className="app-button-primary flex items-center gap-2 rounded-lg px-4 py-2 transition">
-              <Book className="w-4 h-4" />
-              Browse Books
-            </button>
-            <button className="app-button-secondary flex items-center gap-2 rounded-lg px-4 py-2 transition">
-              <CreditCard className="w-4 h-4" />
-              Pay Fines
-            </button>
-            <button className="app-button-secondary flex items-center gap-2 rounded-lg px-4 py-2 transition">
-              <User className="w-4 h-4" />
-              Edit Profile
-            </button>
-          </div>
         </div>
       </div>
     </div>
   );
 };
+
+const Row = ({ icon: Icon, label, value }) => (
+    <div className="flex items-center gap-4 p-4 bg-white border border-slate-100 rounded-2xl group hover:border-indigo-200 transition-all shadow-sm">
+        <div className="p-3 bg-slate-50 rounded-xl text-slate-400 group-hover:text-indigo-600 transition-colors">
+            <Icon className="w-4 h-4" />
+        </div>
+        <div className="min-w-0">
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">{label}</p>
+            <p className="text-xs font-bold text-slate-700 truncate">{value}</p>
+        </div>
+    </div>
+);
+
+const UtilityLink = ({ icon: Icon, label, desc, accent }) => (
+    <button className="w-full flex items-center gap-4 p-4 bg-white border border-slate-100 rounded-[2rem] hover:border-slate-300 transition-all text-left relative overflow-hidden group">
+        <div className={`p-4 rounded-2xl bg-${accent}-50 text-${accent}-600 group-hover:bg-${accent}-500 group-hover:text-white transition-all`}>
+            <Icon className="w-5 h-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+            <p className="text-xs font-black text-slate-800 uppercase tracking-wider leading-none mb-1">{label}</p>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{desc}</p>
+        </div>
+        <ArrowRight className="w-4 h-4 text-slate-200 mr-2 group-hover:text-slate-400 transition-colors" />
+    </button>
+);
 
 export default StudentProfile;

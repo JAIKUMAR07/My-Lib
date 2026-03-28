@@ -1,579 +1,442 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { addBook, addCategory, addLanguage } from "../../redux/booksSlice";
 import {
-  Upload,
-  X,
-  Book,
+  BookOpen,
   User,
   Hash,
   Globe,
-  Type,
-  Building,
-  FileText,
-  Image as ImageIcon,
-  Package,
-  Search,
-  Plus,
-  Check,
-  ChevronDown,
   Tag,
+  Calendar,
+  Layers,
   CheckCircle,
-  RotateCcw,
+  AlertCircle,
+  Plus,
   Loader2,
+  Trash2,
+  ChevronRight,
+  Sparkles,
+  ArrowRight,
 } from "lucide-react";
 
+/**
+ * AddBook Component
+ * Redesigned for a premium, spacious, and professional management experience.
+ * Features: Multi-column grid, searchable + creatable selects, and sophisticated success overlays.
+ */
 const AddBook = () => {
-  const [formData, setFormData] = useState({
+  const dispatch = useDispatch();
+  const availableCategories = useSelector((state) => state.books.categories);
+  const availableLanguages = useSelector((state) => state.books.languages);
+
+  const [form, setForm] = useState({
     title: "",
     author: "",
-    category: "",
     isbn: "",
-    description: "",
-    publisher: "",
-    edition: "",
-    language: "English",
-    cover_image: null,
+    category: "",
+    language: "",
     total_copies: 1,
+    available_copies: 1,
+    publishDate: "",
+    description: "",
+    imageUrl: "",
   });
 
-  const [preview, setPreview] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-
-  const [categorySearch, setCategorySearch] = useState("");
-  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
-  const categoryRef = useRef(null);
-
-  const [languageSearch, setLanguageSearch] = useState("English");
-  const [isLanguageOpen, setIsLanguageOpen] = useState(false);
-  const languageRef = useRef(null);
-
-  const [categories, setCategories] = useState([
-    "Computer Science",
-    "Mathematics",
-    "Physics",
-    "Story",
-    "Civil",
-    "Electronics",
-    "Mechanical",
-    "Engineering",
-    "Literature",
-  ]);
-
-  const [languages, setLanguages] = useState([
-    "English",
-    "Hindi",
-    "Spanish",
-    "French",
-    "German",
-    "Chinese",
-    "Japanese",
-  ]);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (categoryRef.current && !categoryRef.current.contains(event.target)) {
-        setIsCategoryOpen(false);
-      }
-      if (languageRef.current && !languageRef.current.contains(event.target)) {
-        setIsLanguageOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  const [dropdowns, setDropdowns] = useState({ category: false, language: false });
+  const [searchTerms, setSearchTerms] = useState({ category: "", language: "" });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setFormData((prev) => ({ ...prev, cover_image: file }));
-      const reader = new FileReader();
-      reader.onloadend = () => setPreview(reader.result);
-      reader.readAsDataURL(file);
+  const handleSelectOption = (field, value) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+    setDropdowns((prev) => ({ ...prev, [field]: false }));
+  };
+
+  const handleAddNewOption = (field) => {
+    const value = searchTerms[field].trim();
+    if (value) {
+      if (field === 'category') dispatch(addCategory(value));
+      if (field === 'language') dispatch(addLanguage(value));
+      handleSelectOption(field, value);
+      setSearchTerms((prev) => ({ ...prev, [field]: "" }));
     }
   };
 
-  const selectCategory = (cat) => {
-    setFormData((prev) => ({ ...prev, category: cat }));
-    setCategorySearch(cat);
-    setIsCategoryOpen(false);
-  };
-
-  const createNewCategory = () => {
-    if (categorySearch.trim()) {
-      const newCat = categorySearch.trim();
-      if (!categories.includes(newCat))
-        setCategories((prev) => [...prev, newCat]);
-      selectCategory(newCat);
-    }
-  };
-
-  const selectLanguage = (lang) => {
-    setFormData((prev) => ({ ...prev, language: lang }));
-    setLanguageSearch(lang);
-    setIsLanguageOpen(false);
-  };
-
-  const createNewLanguage = () => {
-    if (languageSearch.trim()) {
-      const newLang = languageSearch.trim();
-      if (!languages.includes(newLang))
-        setLanguages((prev) => [...prev, newLang]);
-      selectLanguage(newLang);
-    }
-  };
-
-  const handleReset = () => {
-    setFormData({
-      title: "",
-      author: "",
-      category: "",
-      isbn: "",
-      description: "",
-      publisher: "",
-      edition: "",
-      language: "English",
-      cover_image: null,
-      total_copies: 1,
-    });
-    setPreview(null);
-    setCategorySearch("");
-    setLanguageSearch("English");
-  };
-
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    setIsSubmitting(true);
+    setLoading(true);
 
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    console.log("Adding book:", formData);
-    setIsSubmitting(false);
-    setShowSuccess(true);
-
+    // Simulate sophisticated processing
     setTimeout(() => {
-      setShowSuccess(false);
-      handleReset();
-    }, 3000);
+      dispatch(addBook({
+        ...form,
+        image: form.imageUrl || "https://images.unsplash.com/photo-1543005139-85e883804825?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
+      }));
+      setLoading(false);
+      setShowSuccess(true);
+      // Reset after animation
+      setTimeout(() => {
+        setShowSuccess(false);
+        setForm({
+          title: "",
+          author: "",
+          isbn: "",
+          category: "",
+          language: "",
+          total_copies: 1,
+          available_copies: 1,
+          publishDate: "",
+          description: "",
+          imageUrl: "",
+        });
+      }, 3000);
+    }, 1500);
   };
-
-  const filteredCategories = categories.filter((cat) =>
-    cat.toLowerCase().includes(categorySearch.toLowerCase()),
-  );
-
-  const exactMatchCategory = categories.find(
-    (cat) => cat.toLowerCase() === categorySearch.toLowerCase(),
-  );
-
-  const filteredLanguages = languages.filter((lang) =>
-    lang.toLowerCase().includes(languageSearch.toLowerCase()),
-  );
-
-  const exactMatchLanguage = languages.find(
-    (lang) => lang.toLowerCase() === languageSearch.toLowerCase(),
-  );
 
   return (
-    <div className="max-w-7xl mx-auto py-8 px-6">
-      {/* Header Section - Improved spacing */}
-      <div className="mb-12 flex flex-col md:flex-row md:items-center justify-between gap-6">
+    <div className="relative min-h-[600px] animate-fadeIn">
+      {/* Header Context */}
+      <div className="flex items-center justify-between mb-8">
         <div>
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-3 rounded-xl bg-emerald-100 border border-emerald-200">
-              <Plus className="w-6 h-6 text-emerald-600" />
-            </div>
-            <div>
-              <h2 className="text-3xl font-bold text-slate-900">
-                Register New <span className="text-emerald-600">Book</span>
-              </h2>
-              <p className="text-slate-500 text-sm mt-1 max-w-xl">
-                Expand your library stack by onboarding new physical or digital
-                titles with full meta-registry.
-              </p>
-            </div>
-          </div>
+          <h2 className="text-xl font-black text-slate-800 flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-cyan-600" />
+            Registry Module
+          </h2>
+          <p className="text-slate-500 text-xs font-bold uppercase tracking-[0.15em] mt-1">
+            New Volume Entry System
+          </p>
         </div>
-        <div className="flex gap-4">
-          <div className="px-5 py-2.5 bg-emerald-50 rounded-xl border border-emerald-100 flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-[10px] font-semibold text-emerald-700 uppercase tracking-wide">
-              Active Registry Session
-            </span>
-          </div>
+        <div className="flex -space-x-2">
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="w-8 h-8 rounded-full border-2 border-white bg-slate-100 flex items-center justify-center"
+            >
+              <CheckCircle className="w-4 h-4 text-slate-300" />
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Success Modal */}
-      {showSuccess && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/20 backdrop-blur-sm animate-in fade-in duration-500">
-          <div className="p-8 bg-white rounded-2xl shadow-2xl border border-emerald-100 flex flex-col items-center text-center max-w-md mx-4">
-            <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mb-6">
-              <CheckCircle className="w-10 h-10 text-emerald-600" />
-            </div>
-            <h3 className="text-2xl font-bold text-slate-900 mb-2">
-              Registration Success
-            </h3>
-            <p className="text-slate-500 text-sm">
-              The book has been successfully indexed into the global library
-              catalog.
-            </p>
-          </div>
-        </div>
-      )}
-
-      <form
-        onSubmit={handleSubmit}
-        className="grid grid-cols-1 lg:grid-cols-3 gap-8"
-      >
-        {/* Left: Media Card - Fixed sizing */}
-        <div className="lg:col-span-1">
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 sticky top-8 shadow-sm hover:shadow-md transition-shadow">
-            <div className="mb-6">
-              <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-                Visual Identification
-              </h4>
-              <div className="h-0.5 w-8 bg-emerald-500 rounded-full" />
-            </div>
-
-            <div className="relative">
-              {preview ? (
-                <div className="relative rounded-xl overflow-hidden shadow-lg aspect-[3/4] group">
-                  <img
-                    src={preview}
-                    alt="Preview"
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setPreview(null);
-                        setFormData((p) => ({ ...p, cover_image: null }));
-                      }}
-                      className="p-3 bg-white/20 hover:bg-white/40 rounded-full text-white transition-all"
-                    >
-                      <RotateCcw className="w-5 h-5" />
-                    </button>
-                  </div>
-                </div>
+      <form onSubmit={handleSubmit} className="space-y-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Left Column: Media & Core Meta */}
+          <div className="lg:col-span-4 space-y-6">
+            <div className="soft-card p-6 rounded-3xl border border-slate-100 shadow-sm aspect-square flex flex-col items-center justify-center text-center group cursor-pointer hover:border-cyan-400 transition-all">
+              {form.imageUrl ? (
+                <img
+                  src={form.imageUrl}
+                  alt="Preview"
+                  className="w-full h-full object-cover rounded-2xl mb-4"
+                />
               ) : (
-                <label className="flex flex-col items-center justify-center aspect-[3/4] border-2 border-dashed border-slate-200 rounded-xl hover:border-emerald-400 hover:bg-emerald-50/10 transition-all cursor-pointer bg-slate-50/30 group">
-                  <div className="p-4 rounded-xl bg-white shadow-sm mb-4 group-hover:scale-110 transition-transform">
-                    <Upload className="w-8 h-8 text-slate-400 group-hover:text-emerald-600 transition-colors" />
+                <>
+                  <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <Plus className="w-8 h-8 text-slate-300" />
                   </div>
-                  <p className="text-sm font-semibold text-slate-700">
-                    Upload Cover
+                  <p className="text-sm font-bold text-slate-500">
+                    Upload Volume Cover
                   </p>
-                  <p className="text-[10px] text-slate-400 mt-1">
-                    High DPI Recommended
+                  <p className="text-[10px] text-slate-400 mt-1 uppercase font-black tracking-widest">
+                    PNG / JPG (Max 5MB)
                   </p>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    className="hidden"
-                  />
-                </label>
+                </>
               )}
             </div>
 
-            <div className="mt-6 space-y-6">
-              <div className="grid grid-cols-1 gap-4">
-                <div>
-                  <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2 block">
-                    Stock Inventory
-                  </label>
-                  <div className="flex items-center bg-slate-50 rounded-xl border border-slate-200">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setFormData((p) => ({
-                          ...p,
-                          total_copies: Math.max(1, p.total_copies - 1),
-                        }))
-                      }
-                      className="w-10 h-10 bg-white rounded-l-xl border-r border-slate-200 text-slate-500 hover:text-emerald-600 font-semibold transition-all"
-                    >
-                      -
-                    </button>
-                    <input
-                      type="number"
-                      name="total_copies"
-                      value={formData.total_copies}
-                      onChange={handleChange}
-                      className="flex-1 bg-transparent text-center font-semibold text-slate-900 text-base border-none outline-none focus:ring-0"
-                    />
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setFormData((p) => ({
-                          ...p,
-                          total_copies: p.total_copies + 1,
-                        }))
-                      }
-                      className="w-10 h-10 bg-white rounded-r-xl border-l border-slate-200 text-slate-500 hover:text-emerald-600 font-semibold transition-all"
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-                <div>
-                  <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2 block">
-                    Edition
-                  </label>
-                  <input
-                    type="text"
-                    name="edition"
-                    value={formData.edition}
-                    onChange={handleChange}
-                    placeholder="e.g., 1st ed."
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 transition-all"
-                  />
-                </div>
-              </div>
+            <div className="space-y-4">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block px-2">
+                Cover Image Direct Link
+              </label>
+              <input
+                type="url"
+                name="imageUrl"
+                placeholder="https://images.unsplash.com/..."
+                value={form.imageUrl}
+                onChange={handleChange}
+                className="w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl text-sm focus:border-cyan-500 transition-all outline-none"
+              />
             </div>
           </div>
-        </div>
 
-        {/* Right: Form Fields - Fixed sizing and consistency */}
-        <div className="lg:col-span-2">
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-            <div className="mb-8 flex items-center justify-between">
-              <div>
-                <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  Metadata Registry
-                </h4>
-                <div className="h-0.5 w-8 bg-emerald-500 rounded-full mt-2" />
+          {/* Right Column: Detailed Metadata */}
+          <div className="lg:col-span-8 space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <InputField
+                icon={BookOpen}
+                label="Primary Title"
+                name="title"
+                value={form.title}
+                onChange={handleChange}
+                placeholder="Essential Algorithms..."
+                required
+              />
+              <InputField
+                icon={User}
+                label="Lead Author"
+                name="author"
+                value={form.author}
+                onChange={handleChange}
+                placeholder="Dr. Robert Martin"
+                required
+              />
+              <InputField
+                icon={Hash}
+                label="Universal ISBN-13"
+                name="isbn"
+                value={form.isbn}
+                onChange={handleChange}
+                placeholder="978-3-16-148410-0"
+                required
+              />
+              <InputField
+                icon={Calendar}
+                label="Release Year"
+                name="publishDate"
+                type="date"
+                value={form.publishDate}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Category Searchable+Creatable Select */}
+              <div className="space-y-2 relative">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">
+                  Book Classification
+                </label>
+                <div className="relative">
+                  <div
+                    onClick={() =>
+                      setDropdowns((p) => ({ ...p, category: !p.category }))
+                    }
+                    className="flex items-center gap-3 w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl text-sm cursor-pointer hover:border-slate-300 transition-all"
+                  >
+                    <Layers className="w-4 h-4 text-cyan-600" />
+                    <span className={form.category ? "text-slate-800" : "text-slate-400"}>
+                      {form.category || "Select classification..."}
+                    </span>
+                  </div>
+
+                  {dropdowns.category && (
+                    <div className="absolute top-full left-0 w-full mt-2 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 p-2 animate-fadeIn">
+                      <input
+                        type="text"
+                        placeholder="Search or add fresh genre..."
+                        className="w-full p-3 bg-slate-50 border-none rounded-xl text-sm outline-none mb-2"
+                        value={searchTerms.category}
+                        onChange={(e) =>
+                          setSearchTerms((p) => ({ ...p, category: e.target.value }))
+                        }
+                        autoFocus
+                      />
+                      <div className="max-h-48 overflow-y-auto no-scrollbar">
+                        {availableCategories
+                          .filter((c) =>
+                            c.toLowerCase().includes(searchTerms.category.toLowerCase())
+                          )
+                          .map((cat) => (
+                            <div
+                              key={cat}
+                              onClick={() => handleSelectOption("category", cat)}
+                              className="px-4 py-2.5 hover:bg-slate-50 rounded-xl cursor-pointer text-sm font-medium text-slate-600 transition-colors"
+                            >
+                              {cat}
+                            </div>
+                          ))}
+                        {searchTerms.category &&
+                          !availableCategories.some(
+                            (c) => c.toLowerCase() === searchTerms.category.toLowerCase()
+                          ) && (
+                            <div
+                              onClick={() => handleAddNewOption("category")}
+                              className="px-4 py-2.5 bg-cyan-50 text-cyan-700 rounded-xl cursor-pointer text-sm font-bold flex items-center justify-between"
+                            >
+                              Add "{searchTerms.category}"
+                              <Plus className="w-4 h-4" />
+                            </div>
+                          )}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="px-3 py-1.5 bg-slate-100 rounded-lg text-[9px] font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />{" "}
-                Validation Enabled
+
+              {/* Language Searchable+Creatable Select */}
+              <div className="space-y-2 relative">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">
+                  Publishing Language
+                </label>
+                <div className="relative">
+                  <div
+                    onClick={() =>
+                      setDropdowns((p) => ({ ...p, language: !p.language }))
+                    }
+                    className="flex items-center gap-3 w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl text-sm cursor-pointer hover:border-slate-300 transition-all"
+                  >
+                    <Globe className="w-4 h-4 text-cyan-600" />
+                    <span className={form.language ? "text-slate-800" : "text-slate-400"}>
+                      {form.language || "Select language..."}
+                    </span>
+                  </div>
+
+                  {dropdowns.language && (
+                    <div className="absolute top-full left-0 w-full mt-2 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 p-2 animate-fadeIn">
+                      <input
+                        type="text"
+                        placeholder="Search or add language..."
+                        className="w-full p-3 bg-slate-50 border-none rounded-xl text-sm outline-none mb-2"
+                        value={searchTerms.language}
+                        onChange={(e) =>
+                          setSearchTerms((p) => ({ ...p, language: e.target.value }))
+                        }
+                        autoFocus
+                      />
+                      <div className="max-h-48 overflow-y-auto no-scrollbar">
+                        {availableLanguages
+                          .filter((l) =>
+                            l.toLowerCase().includes(searchTerms.language.toLowerCase())
+                          )
+                          .map((lang) => (
+                            <div
+                              key={lang}
+                              onClick={() => handleSelectOption("language", lang)}
+                              className="px-4 py-2.5 hover:bg-slate-50 rounded-xl cursor-pointer text-sm font-medium text-slate-600 transition-colors"
+                            >
+                              {lang}
+                            </div>
+                          ))}
+                        {searchTerms.language &&
+                          !availableLanguages.some(
+                            (l) => l.toLowerCase() === searchTerms.language.toLowerCase()
+                          ) && (
+                            <div
+                              onClick={() => handleAddNewOption("language")}
+                              className="px-4 py-2.5 bg-cyan-50 text-cyan-700 rounded-xl cursor-pointer text-sm font-bold flex items-center justify-between"
+                            >
+                              Add "{searchTerms.language}"
+                              <Plus className="w-4 h-4" />
+                            </div>
+                          )}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Title Field */}
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                  Official Book Title *
-                </label>
-                <input
-                  type="text"
-                  name="title"
-                  value={formData.title}
-                  onChange={handleChange}
-                  placeholder="e.g., The Art of Computer Programming"
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-900 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 transition-all outline-none"
-                  required
-                />
-              </div>
-
-              {/* Author Field */}
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                  Lead Author / Creator *
-                </label>
-                <input
-                  type="text"
-                  name="author"
-                  value={formData.author}
-                  onChange={handleChange}
-                  placeholder="Full registered name..."
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-900 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 transition-all outline-none"
-                  required
-                />
-              </div>
-
-              {/* Category Field with Dropdown */}
-              <div className="space-y-2 relative" ref={categoryRef}>
-                <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                  Book Classification *
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={categorySearch}
-                    onChange={(e) => {
-                      setCategorySearch(e.target.value);
-                      setIsCategoryOpen(true);
-                    }}
-                    onFocus={() => setIsCategoryOpen(true)}
-                    placeholder="Select Academic Genre..."
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-900 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 transition-all outline-none pr-10"
-                    required
-                  />
-                  <ChevronDown
-                    className={`absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 transition-transform ${isCategoryOpen ? "rotate-180" : ""}`}
-                  />
-
-                  {isCategoryOpen && (
-                    <div className="absolute top-full left-0 w-full mt-2 bg-white rounded-xl shadow-lg border border-slate-200 z-50 overflow-hidden">
-                      <div className="max-h-48 overflow-y-auto">
-                        {filteredCategories.map((cat) => (
-                          <button
-                            key={cat}
-                            type="button"
-                            onClick={() => selectCategory(cat)}
-                            className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-slate-50 text-left transition-colors text-sm text-slate-700"
-                          >
-                            <span>{cat}</span>
-                            {formData.category === cat && (
-                              <CheckCircle className="w-4 h-4 text-emerald-500" />
-                            )}
-                          </button>
-                        ))}
-                      </div>
-                      {!exactMatchCategory && categorySearch.trim() && (
-                        <div className="p-3 border-t border-slate-200 bg-slate-50">
-                          <button
-                            type="button"
-                            onClick={createNewCategory}
-                            className="w-full py-2.5 bg-slate-900 text-white rounded-lg text-xs font-semibold uppercase tracking-wider hover:bg-slate-800 transition-all"
-                          >
-                            + Create New Category
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* ISBN Field */}
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                  Universal ISBN-13 *
-                </label>
-                <input
-                  type="text"
-                  name="isbn"
-                  value={formData.isbn}
-                  onChange={handleChange}
-                  placeholder="978-X-XXXXX-XX-X"
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-mono text-sm text-slate-800 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 transition-all outline-none"
-                  required
-                />
-              </div>
-
-              {/* Language Field with Dropdown */}
-              <div className="space-y-2 relative" ref={languageRef}>
-                <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                  Catalog Language
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={languageSearch}
-                    onChange={(e) => {
-                      setLanguageSearch(e.target.value);
-                      setIsLanguageOpen(true);
-                    }}
-                    onFocus={() => setIsLanguageOpen(true)}
-                    placeholder="Choose Publication Language..."
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-900 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 transition-all outline-none pr-10"
-                  />
-                  <ChevronDown
-                    className={`absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 transition-transform ${isLanguageOpen ? "rotate-180" : ""}`}
-                  />
-                  {isLanguageOpen && (
-                    <div className="absolute top-full left-0 w-full mt-2 bg-white rounded-xl shadow-lg border border-slate-200 z-50 overflow-hidden">
-                      <div className="max-h-48 overflow-y-auto">
-                        {filteredLanguages.map((lang) => (
-                          <button
-                            key={lang}
-                            type="button"
-                            onClick={() => selectLanguage(lang)}
-                            className="w-full text-left px-4 py-2.5 hover:bg-slate-50 text-sm text-slate-700"
-                          >
-                            {lang}
-                          </button>
-                        ))}
-                      </div>
-                      {!exactMatchLanguage && languageSearch.trim() && (
-                        <div className="p-3 border-t border-slate-200 bg-slate-50">
-                          <button
-                            type="button"
-                            onClick={createNewLanguage}
-                            className="w-full py-2.5 bg-slate-800 text-white rounded-lg text-xs font-semibold uppercase tracking-wider hover:bg-slate-700 transition-all"
-                          >
-                            + Add Language
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Publisher Field */}
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                  Publishing House
-                </label>
-                <input
-                  type="text"
-                  name="publisher"
-                  value={formData.publisher}
-                  onChange={handleChange}
-                  placeholder="e.g., Penguin Random House"
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-900 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 transition-all outline-none"
-                />
-              </div>
-            </div>
-
-            {/* Description Field - Full Width */}
-            <div className="mt-8 space-y-2">
-              <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                Book Abstract / Synopsis
-              </label>
-              <textarea
-                name="description"
-                value={formData.description}
+              <InputField
+                icon={Layers}
+                label="Acquisition Size (Stock)"
+                name="total_copies"
+                type="number"
+                value={form.total_copies}
                 onChange={handleChange}
-                placeholder="Provide a comprehensive summary of the book content for index records..."
-                rows="4"
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 transition-all outline-none resize-none"
+                required
+              />
+              <InputField
+                icon={Layers}
+                label="Current Usable Units"
+                name="available_copies"
+                type="number"
+                value={form.available_copies}
+                onChange={handleChange}
+                required
               />
             </div>
 
-            {/* Action Buttons */}
-            <div className="mt-8 flex flex-col sm:flex-row items-center gap-4 pt-6 border-t border-slate-200">
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="flex-1 w-full py-3 bg-green-600 text-white rounded-xl font-semibold text-sm flex items-center justify-center gap-3 hover:bg-green-700 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
-              >
-                {isSubmitting ? (
+            <div className="space-y-4">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">
+                Bibliographic Summary / Abstract
+              </label>
+              <textarea
+                name="description"
+                rows="4"
+                value={form.description}
+                onChange={handleChange}
+                placeholder="Provide a detailed overview of the book's content..."
+                className="w-full px-5 py-4 bg-white border border-slate-200 rounded-[2rem] text-sm focus:border-cyan-500 transition-all outline-none resize-none shadow-sm"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="group relative w-full md:w-auto px-10 py-5 bg-slate-900 border border-slate-950 rounded-[2rem] text-white font-black text-sm uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl active:scale-95 disabled:opacity-50"
+            >
+              <div className="flex items-center justify-center gap-3">
+                {loading ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" /> Analyzing
-                    Metadata...
+                    <Loader2 className="w-5 h-5 animate-spin text-cyan-400" />
+                    Analyzing Metadata...
                   </>
                 ) : (
                   <>
-                    Initialize Registration <Plus className="w-4 h-4" />
+                    Finalize Volume Registry
+                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                   </>
                 )}
-              </button>
-              <button
-                type="button"
-                onClick={handleReset}
-                className="px-6 py-3 bg-red-500 text-white rounded-xl font-semibold text-sm hover:bg-red-600 transition-all  "
-              >
-                Discard Draft
-              </button>
-            </div>
+              </div>
+            </button>
           </div>
         </div>
       </form>
+
+      {/* Success Overlays */}
+      {showSuccess && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/60 backdrop-blur-md animate-fadeIn">
+          <div className="bg-slate-900 rounded-4xl p-12 text-center shadow-2xl space-y-6 scale-up max-w-sm">
+            <div className="w-24 h-24 bg-cyan-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+              <CheckCircle className="w-12 h-12 text-cyan-400" />
+            </div>
+            <h3 className="text-2xl font-black text-white">Registry Success</h3>
+            <p className="text-slate-400 text-sm font-medium leading-relaxed">
+              Volume has been encoded and synced with the library matrix. Inventory levels updated.
+            </p>
+            <div className="h-1 bg-cyan-500 rounded-full w-0 animate-progress" />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+
+const InputField = ({
+  icon: Icon,
+  label,
+  name,
+  type = "text",
+  value,
+  onChange,
+  placeholder,
+  required = false,
+}) => (
+  <div className="space-y-3">
+    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2 block">
+      {label}
+    </label>
+    <div className="relative group">
+      <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-cyan-600 transition-colors">
+        <Icon className="w-4 h-4" />
+      </div>
+      <input
+        type={type}
+        name={name}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        required={required}
+        className="w-full pl-12 pr-5 py-4 bg-white border border-slate-200 rounded-2xl text-sm font-medium text-slate-800 focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/5 transition-all outline-none shadow-sm"
+      />
+    </div>
+  </div>
+);
 
 export default AddBook;
