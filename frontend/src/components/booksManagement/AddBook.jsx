@@ -239,20 +239,21 @@ const AddBook = () => {
                       <div className="max-h-48 overflow-y-auto no-scrollbar">
                         {availableCategories
                           .filter((c) =>
-                            c.toLowerCase().includes(searchTerms.category.toLowerCase())
+                            c.name.toLowerCase().includes(searchTerms.category.toLowerCase())
                           )
                           .map((cat) => (
                             <div
-                              key={cat}
-                              onClick={() => handleSelectOption("category", cat)}
-                              className="px-4 py-2.5 hover:bg-slate-50 rounded-xl cursor-pointer text-sm font-medium text-slate-600 transition-colors"
+                              key={cat.name}
+                              onClick={() => handleSelectOption("category", cat.name)}
+                              className="px-4 py-2.5 hover:bg-slate-50 rounded-xl cursor-pointer text-sm font-medium text-slate-600 transition-colors flex items-center gap-2"
                             >
-                              {cat}
+                              <img src={cat.icon} alt="" className="w-5 h-5 object-contain opacity-70" />
+                              {cat.name}
                             </div>
                           ))}
                         {searchTerms.category &&
                           !availableCategories.some(
-                            (c) => c.toLowerCase() === searchTerms.category.toLowerCase()
+                            (c) => c.name.toLowerCase() === searchTerms.category.toLowerCase()
                           ) && (
                             <div
                               onClick={() => handleAddNewOption("category")}

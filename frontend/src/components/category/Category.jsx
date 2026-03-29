@@ -1,53 +1,32 @@
 import { useNavigate } from "react-router-dom";
 import { ChevronRight, ChevronLeft } from "lucide-react";
 import { useRef } from "react";
+import { useSelector } from "react-redux";
 
-const categories = [
-  {
-    image: "https://cdn-icons-png.flaticon.com/128/10150/10150793.png",
-    name: "CSE",
-    color: "bg-blue-50 text-blue-600",
-  },
-  {
-    image: "https://cdn-icons-png.flaticon.com/128/389/389493.png",
-    name: "Mechanical",
-    color: "bg-orange-50 text-orange-600",
-  },
-  {
-    image: "https://cdn-icons-png.flaticon.com/128/3500/3500690.png",
-    name: "Story",
-    color: "bg-purple-50 text-purple-600",
-  },
-  {
-    image: "https://cdn-icons-png.flaticon.com/128/2276/2276360.png",
-    name: "Civil",
-    color: "bg-emerald-50 text-emerald-600",
-  },
-  {
-    image: "https://cdn-icons-png.flaticon.com/128/2249/2249539.png",
-    name: "Math",
-    color: "bg-rose-50 text-rose-600",
-  },
-  {
-    image: "https://cdn-icons-png.flaticon.com/128/675/675795.png",
-    name: "Electronics",
-    color: "bg-amber-50 text-amber-600",
-  },
-  {
-    image: "https://cdn-icons-png.flaticon.com/128/3004/3004558.png",
-    name: "Physics",
-    color: "bg-indigo-50 text-indigo-600",
-  },
-  {
-    image: "https://cdn-icons-png.flaticon.com/128/1993/1993103.png",
-    name: "Chemistry",
-    color: "bg-cyan-50 text-cyan-600",
-  },
+const iconPool = [
+  "https://cdn-icons-png.flaticon.com/128/10150/10150793.png",
+  "https://cdn-icons-png.flaticon.com/128/389/389493.png",
+  "https://cdn-icons-png.flaticon.com/128/3500/3500690.png",
+  "https://cdn-icons-png.flaticon.com/128/2276/2276360.png",
+  "https://cdn-icons-png.flaticon.com/128/2249/2249539.png",
+  "https://cdn-icons-png.flaticon.com/128/675/675795.png",
+];
+
+const colorPool = [
+  "bg-blue-50 text-blue-600",
+  "bg-orange-50 text-orange-600",
+  "bg-purple-50 text-purple-600",
+  "bg-emerald-50 text-emerald-600",
+  "bg-rose-50 text-rose-600",
+  "bg-amber-50 text-amber-600",
+  "bg-indigo-50 text-indigo-600",
+  "bg-cyan-50 text-cyan-600",
 ];
 
 const Category = () => {
   const navigate = useNavigate();
   const scrollRef = useRef(null);
+  const categories = useSelector((state) => state.books.categories || []);
 
   const scroll = (direction) => {
     if (scrollRef.current) {
@@ -101,24 +80,27 @@ const Category = () => {
         ref={scrollRef}
         className="flex gap-4 md:gap-6 overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory py-4"
       >
-        {categories.map((item, index) => (
+        {categories.map((category, index) => (
           <div
-            key={index}
-            onClick={() => navigate(`/category/${item.name.toLowerCase()}`)}
+            key={category.name}
+            onClick={() => navigate(`/category/${encodeURIComponent(category.name.toLowerCase())}`)}
             className="group cursor-pointer shrink-0 w-[160px] md:w-[200px] snap-start"
           >
             <div className="soft-card relative overflow-hidden p-6 rounded-[2.5rem] transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-cyan-100/50 flex flex-col items-center justify-center aspect-square border-none bg-white/70 backdrop-blur-sm shadow-xl shadow-slate-200/20">
               <div
-                className={`w-14 h-14 md:w-20 md:h-20 rounded-3xl ${item.color.split(" ")[0]} flex items-center justify-center mb-4 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6`}
+                className={`w-14 h-14 md:w-20 md:h-20 rounded-3xl ${colorPool[index % colorPool.length].split(" ")[0]} flex items-center justify-center mb-4 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6`}
               >
                 <img
-                  src={item.image}
-                  alt={item.name}
-                  className="w-8 h-8 md:w-12 md:h-12 drop-shadow-md"
+                  src={category.icon || iconPool[index % iconPool.length]}
+                  alt={category.name}
+                  className="w-8 h-8 md:w-12 md:h-12 drop-shadow-md object-contain"
+                  onError={(e) => {
+                    e.target.src = iconPool[index % iconPool.length];
+                  }}
                 />
               </div>
               <h3 className="text-xs md:text-base font-bold text-slate-800 text-center tracking-tight">
-                {item.name}
+                {category.name}
               </h3>
 
               {/* Decorative background element */}

@@ -85,7 +85,7 @@ const BookInventory = () => {
             className="px-4 py-3 bg-white border border-slate-200 rounded-2xl text-xs font-bold text-slate-600 outline-none focus:border-cyan-400 appearance-none cursor-pointer min-w-[140px] shadow-sm"
           >
             <option value="all">Genres: All</option>
-            {categories.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
+            {categories.map((cat) => <option key={cat.name} value={cat.name}>{cat.name}</option>)}
           </select>
 
           <select
@@ -275,14 +275,38 @@ const BookInventory = () => {
       {/* Aggregate Bottom Analytics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 pt-12 mt-12 border-t border-slate-100">
         {[
-          { label: "Aggregate Volume", value: books.reduce((sum, b) => sum + b.total_copies, 0), icon: Archive, color: "slate" },
-          { label: "Active Pool", value: books.reduce((sum, b) => sum + b.available_copies, 0), icon: BookOpen, color: "emerald" },
-          { label: "Out of Cycles", value: books.filter(b => b.status === "out-of-stock").length, icon: AlertCircle, color: "rose" },
-          { label: "Active Genres", value: categories.length, icon: TrendingUp, color: "amber" },
+          {
+            label: "Aggregate Volume",
+            value: books.reduce((sum, b) => sum + b.total_copies, 0),
+            icon: Archive,
+            iconWrapClass: "bg-slate-50 border-slate-100",
+            iconClass: "text-slate-600",
+          },
+          {
+            label: "Active Pool",
+            value: books.reduce((sum, b) => sum + b.available_copies, 0),
+            icon: BookOpen,
+            iconWrapClass: "bg-emerald-50 border-emerald-100",
+            iconClass: "text-emerald-600",
+          },
+          {
+            label: "Out of Cycles",
+            value: books.filter((b) => b.status === "out-of-stock").length,
+            icon: AlertCircle,
+            iconWrapClass: "bg-rose-50 border-rose-100",
+            iconClass: "text-rose-600",
+          },
+          {
+            label: "Active Genres",
+            value: categories.length,
+            icon: TrendingUp,
+            iconWrapClass: "bg-amber-50 border-amber-100",
+            iconClass: "text-amber-600",
+          },
         ].map((stat, idx) => (
           <div key={idx} className="bg-white p-6 rounded-4xl border border-slate-100 shadow-sm flex items-center justify-between group hover:border-cyan-200 transition-all">
-            <div className={`p-4 rounded-2xl bg-${stat.color}-50 border border-${stat.color}-100 transition-colors group-hover:bg-cyan-500 group-hover:border-cyan-400`}>
-              <stat.icon className={`w-6 h-6 text-${stat.color}-600 transition-colors group-hover:text-white`} />
+            <div className={`p-4 rounded-2xl border transition-colors group-hover:bg-cyan-500 group-hover:border-cyan-400 ${stat.iconWrapClass}`}>
+              <stat.icon className={`w-6 h-6 transition-colors group-hover:text-white ${stat.iconClass}`} />
             </div>
             <div className="text-right">
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{stat.label}</p>

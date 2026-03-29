@@ -7,7 +7,12 @@ import { store } from "./redux/store";
 import { Provider } from "react-redux";
 
 store.subscribe(() => {
-  localStorage.setItem("cart", JSON.stringify(store.getState().cart));
+  const state = store.getState();
+  // Standardized persistence strategy
+  localStorage.setItem("cart", JSON.stringify(state.cart));
+  localStorage.setItem("users", JSON.stringify(state.users));
+  localStorage.setItem("books", JSON.stringify(state.books));
+  localStorage.setItem("issues", JSON.stringify(state.issues));
 });
 
 ReactDOM.createRoot(document.getElementById("root")).render(

@@ -1,124 +1,100 @@
-import { useContext } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
-import myContext from "../../context/myContext";
-import Loader from "../loader/Loader";
+import { deleteIssue } from "../../redux/issuesSlice";
 import toast from "react-hot-toast";
+import { Trash2, PlusCircle, ExternalLink } from "lucide-react";
 
 const IssueDetail = () => {
-  const context = useContext(myContext);
-  const { loading, setLoading, getIssue, setGetIssueBooks } = context;
+  const dispatch = useDispatch();
+  const issues = useSelector((state) => state.issues.items);
 
-  // Delete product
-  const deleteBooks = async (id) => {
-    setLoading(true);
-    try {
-      const updatedIssues = getIssue.filter((issue) => issue.id !== id);
-      setGetIssueBooks(updatedIssues);
-      localStorage.setItem("issues", JSON.stringify(updatedIssues));
-      toast.success("Borrowed Book Deleted");
-      setLoading(false);
-    } catch (error) {
-      console.log(error);
-      setLoading(false);
-      toast.error("Failed to delete");
-    }
+  const handleDeleteIssue = (id) => {
+    dispatch(deleteIssue(id));
+    toast.success("Archive Entry Removed");
   };
 
   return (
-    <div>
-      <div className="py-5 flex justify-between items-center">
-        {/* text  */}
-        <h1 className="text-xl text-purple-700 font-bold">Borrowed Books</h1>
-        {/* Add Product Button  */}
-        <Link to={"/issueproduct"}>
-          <button className="px-5 py-2 bg-green-400 border text-white font-bold rounded-lg">
-            Borrow
+    <div className="animate-fadeIn">
+      <div className="py-8 flex flex-col md:flex-row justify-between items-center bg-white px-8 rounded-t-[2.5rem] border-b border-slate-50 gap-4">
+        <div>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tighter">Inventory Circulation</h1>
+          <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Real-time Borrowing Audit</p>
+        </div>
+        
+        <Link to={"/borrowermanagement"}>
+          <button className="group px-8 py-3.5 bg-slate-900 text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-2xl flex items-center gap-2 hover:scale-105 transition-all shadow-xl shadow-slate-300">
+            <PlusCircle className="w-4 h-4" />
+            New Transaction
           </button>
         </Link>
       </div>
 
-      {/* Loading  */}
-      {loading && (
-        <div className="flex justify-center relative top-20">
-          <Loader />
-        </div>
-      )}
-
-      {/* table  */}
-      <div className="w-full overflow-x-auto mb-5">
-        <table className="w-full text-left border border-collapse sm:border-separate border-pink-100 text-pink-400">
-          <tbody>
-            <tr>
-              <th
-                scope="col"
-                className="h-12 px-6 text-md border-l first:border-l-0 border-pink-100 text-slate-700 bg-slate-100 font-bold"
-              >
-                S.No.
-              </th>
-              <th
-                scope="col"
-                className="h-12 px-6 text-md font-bold border-l first:border-l-0 border-pink-100 text-slate-700 bg-slate-100"
-              >
-                Name
-              </th>
-              <th
-                scope="col"
-                className="h-12 px-6 text-md font-bold border-l first:border-l-0 border-pink-100 text-slate-700 bg-slate-100"
-              >
-                Title
-              </th>
-
-              <th
-                scope="col"
-                className="h-12 px-6 text-md font-bold border-l first:border-l-0 border-pink-100 text-slate-700 bg-slate-100"
-              >
-                Phone No.
-              </th>
-              <th
-                scope="col"
-                className="h-12 px-6 text-md font-bold border-l first:border-l-0 border-pink-100 text-slate-700 bg-slate-100"
-              >
-                Date
-              </th>
-              <th
-                scope="col"
-                className="h-12 px-6 text-md font-bold border-l first:border-l-0 border-pink-100 text-slate-700 bg-slate-100"
-              >
-                Action
-              </th>
+      <div className="w-full overflow-x-auto bg-white rounded-b-[2.5rem] shadow-2xl shadow-slate-200/40">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="bg-slate-50/50">
+              <th className="py-7 px-8 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">ID</th>
+              <th className="py-7 px-8 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Borrower Identity</th>
+              <th className="py-7 px-8 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Resource Title</th>
+              <th className="py-7 px-8 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Maturity Status</th>
+              <th className="py-7 px-8 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Timestamp</th>
+              <th className="py-7 px-8 text-right text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Operations</th>
             </tr>
-
-            {getIssue.map((item, index) => {
-              const { id, name, title, phone, date } = item;
-              return (
-                <tr className="text-pink-300" key={index}>
-                  <td className="h-12 px-6 text-md transition duration-300 border-t border-l first:border-l-0 border-pink-100 stroke-slate-500 text-slate-500 ">
-                    {index + 1}
-                  </td>
-                  <td className="h-12 px-6 text-md transition duration-300 border-t border-l first:border-l-0 border-pink-100 stroke-slate-500 text-slate-500 ">
-                    {name}
-                  </td>
-                  <td className="h-12 px-6 text-md transition duration-300 border-t border-l first:border-l-0 border-pink-100 stroke-slate-500 text-slate-500 ">
-                    {title}
-                  </td>
-                  <td className="h-12 px-6 text-md transition duration-300 border-t border-l first:border-l-0 border-pink-100 stroke-slate-500 text-slate-500 ">
-                    {phone}
-                  </td>
-                  <td className="h-12 px-6 text-md transition duration-300 border-t border-l first:border-l-0 border-pink-100 stroke-slate-500 text-slate-500 ">
-                    {date}
-                  </td>
-
-                  <td
-                    onClick={() => deleteBooks(id)}
-                    className="h-12 px-6 text-md transition duration-300 border-t border-l first:border-l-0 border-pink-100 stroke-slate-500 text-red-500 font-bold hover:cursor-pointer"
-                  >
-                    delete
-                  </td>
-                </tr>
-              );
-            })}
+          </thead>
+          <tbody className="divide-y divide-slate-50">
+            {issues.map((item, index) => (
+              <tr key={item.id} className="hover:bg-slate-50/50 transition-colors group">
+                <td className="px-8 py-6">
+                   <span className="font-mono text-xs font-bold text-slate-400">
+                     {String(index + 1).padStart(2, '0')}
+                   </span>
+                </td>
+                <td className="px-8 py-6">
+                   <div className="flex flex-col">
+                      <span className="text-sm font-black text-slate-900">{item.userName}</span>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{item.userLibId}</span>
+                   </div>
+                </td>
+                <td className="px-8 py-6">
+                   <span className="text-sm font-bold text-slate-600 truncate max-w-[200px] block">
+                     {item.bookTitle}
+                   </span>
+                </td>
+                <td className="px-8 py-6">
+                   <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
+                     item.status === 'overdue' ? 'bg-rose-100 text-rose-600' : 'bg-blue-100 text-blue-600'
+                   }`}>
+                     {item.status}
+                   </span>
+                </td>
+                <td className="px-8 py-6 text-sm font-medium text-slate-400">{item.issueDate}</td>
+                <td className="px-8 py-6 text-right">
+                   <div className="flex items-center justify-end gap-3 translate-x-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 transition-all">
+                      <button className="p-2 text-slate-400 hover:text-blue-600 transition-colors">
+                         <ExternalLink className="w-4 h-4" />
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteIssue(item.id)}
+                        className="p-2 text-slate-400 hover:text-rose-600 transition-colors"
+                      >
+                         <Trash2 className="w-4 h-4" />
+                      </button>
+                   </div>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
+        
+        {issues.length === 0 && (
+           <div className="py-32 text-center">
+              <div className="inline-flex p-6 bg-slate-50 rounded-full mb-4">
+                 <Trash2 className="w-10 h-10 text-slate-200" />
+              </div>
+              <h3 className="text-xl font-black text-slate-900">Archive Vacant</h3>
+              <p className="text-slate-400 font-medium">No inventory circulation detected in active registry.</p>
+           </div>
+        )}
       </div>
     </div>
   );

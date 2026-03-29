@@ -1,7 +1,30 @@
 import { createSlice } from '@reduxjs/toolkit';
 
+const normalizeValue = (value = "") => value.trim().toLowerCase();
+const toSafeInt = (value, fallback = 0) => {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isNaN(parsed) ? fallback : parsed;
+};
+
+const safeReadBooks = () => {
+  try {
+    const raw = localStorage.getItem("books");
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    // Validate we have the properties we expect
+    if (parsed && Array.isArray(parsed.items)) {
+      return parsed;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+};
+
+const savedState = safeReadBooks();
+
 const initialState = {
-  items: [
+  items: savedState?.items || [
     {
       id: 1,
       title: "Introduction to Algorithms",
@@ -12,7 +35,7 @@ const initialState = {
       available_copies: 18,
       borrowed_copies: 7,
       status: "in-stock",
-      price: 1200, // Added price for the store view
+      price: 1200,
       description: "A comprehensive guide to algorithm design and implementation.",
       image: "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
     },
@@ -143,8 +166,14 @@ const initialState = {
       image: "https://images.unsplash.com/photo-1558494949-ef010cbdcc51?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
     },
   ],
-  categories: ["Computer Science", "Software Engineering", "Database", "Networking", "Mathematics"],
-  languages: ["English", "Hindi", "French", "German", "Spanish"],
+  categories: savedState?.categories || [
+    { name: "Computer Science", icon: "https://img.icons8.com/isometric/512/laptop--v1.png" },
+    { name: "Software Engineering", icon: "https://img.icons8.com/isometric/512/code.png" },
+    { name: "Database", icon: "https://img.icons8.com/isometric/512/database.png" },
+    { name: "Networking", icon: "https://img.icons8.com/isometric/512/network-cable.png" },
+    { name: "Mathematics", icon: "https://img.icons8.com/isometric/512/math.png" }
+  ],
+  languages: savedState?.languages || ["English", "Hindi", "French", "German", "Spanish"],
   loading: false,
   error: null,
 };
@@ -154,21 +183,43 @@ const booksSlice = createSlice({
   initialState,
   reducers: {
     addBook: (state, action) => {
+      const totalCopies = Math.max(0, toSafeInt(action.payload.total_copies, 1));
+      const requestedAvailable = Math.max(0, toSafeInt(action.payload.available_copies, totalCopies));
+      const availableCopies = Math.min(requestedAvailable, totalCopies);
       const newBook = {
         ...action.payload,
         id: state.items.length > 0 ? Math.max(...state.items.map(b => b.id)) + 1 : 1,
-        borrowed_copies: 0,
-        status: action.payload.available_copies > 0 ? 'in-stock' : 'out-of-stock',
+        total_copies: totalCopies,
+        available_copies: availableCopies,
+        borrowed_copies: Math.max(0, totalCopies - availableCopies),
+        image:
+          action.payload.image ||
+          action.payload.imageUrl ||
+          action.payload.productImageUrl ||
+          "https://images.unsplash.com/photo-1543005139-85e883804825?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
+        status: availableCopies > 0 ? 'in-stock' : 'out-of-stock',
       };
       state.items.unshift(newBook);
     },
     updateBook: (state, action) => {
       const index = state.items.findIndex(book => book.id === action.payload.id);
       if (index !== -1) {
+        const currentBook = state.items[index];
+        const totalCopies = Math.max(0, toSafeInt(action.payload.total_copies, currentBook.total_copies));
+        const requestedAvailable = Math.max(0, toSafeInt(action.payload.available_copies, currentBook.available_copies));
+        const availableCopies = Math.min(requestedAvailable, totalCopies);
         state.items[index] = {
-           ...state.items[index], 
+           ...currentBook, 
            ...action.payload,
-           status: action.payload.available_copies > 0 ? 'in-stock' : 'out-of-stock'
+           total_copies: totalCopies,
+           available_copies: availableCopies,
+           borrowed_copies: Math.max(0, totalCopies - availableCopies),
+           image:
+            action.payload.image ||
+            action.payload.imageUrl ||
+            action.payload.productImageUrl ||
+            currentBook.image,
+           status: availableCopies > 0 ? 'in-stock' : 'out-of-stock'
         };
       }
     },
@@ -186,17 +237,71 @@ const booksSlice = createSlice({
       }
     },
     addCategory: (state, action) => {
-      if (!state.categories.includes(action.payload)) {
-        state.categories.push(action.payload);
+      const { name, icon } = action.payload || {};
+      const trimmedName = name?.trim();
+      if (!trimmedName) return;
+      
+      const exists = state.categories.some(
+        (item) => normalizeValue(item.name) === normalizeValue(trimmedName)
+      );
+      if (!exists) {
+        state.categories.push({ 
+          name: trimmedName, 
+          icon: icon || "https://img.icons8.com/isometric/512/add-folder.png" 
+        });
       }
     },
+    updateCategory: (state, action) => {
+       const { name, icon } = action.payload || {};
+       const index = state.categories.findIndex(c => normalizeValue(c.name) === normalizeValue(name));
+       if (index !== -1) {
+         state.categories[index].icon = icon;
+       }
+    },
     addLanguage: (state, action) => {
-      if (!state.languages.includes(action.payload)) {
-        state.languages.push(action.payload);
+      const language = action.payload?.trim();
+      if (!language) return;
+      const exists = state.languages.some(
+        (item) => normalizeValue(item) === normalizeValue(language)
+      );
+      if (!exists) {
+        state.languages.push(language);
       }
+    },
+    removeCategory: (state, action) => {
+      const nameToRemove = action.payload?.trim();
+      if (!nameToRemove) return;
+      const isUsedByBooks = state.items.some(
+        (book) => normalizeValue(book.category) === normalizeValue(nameToRemove)
+      );
+      if (isUsedByBooks) return;
+      state.categories = state.categories.filter(
+        (item) => normalizeValue(item.name) !== normalizeValue(nameToRemove)
+      );
+    },
+    removeLanguage: (state, action) => {
+      const languageToRemove = action.payload?.trim();
+      if (!languageToRemove) return;
+      const isUsedByBooks = state.items.some(
+        (book) => normalizeValue(book.language || "") === normalizeValue(languageToRemove)
+      );
+      if (isUsedByBooks) return;
+      state.languages = state.languages.filter(
+        (item) => normalizeValue(item) !== normalizeValue(languageToRemove)
+      );
     }
   },
 });
 
-export const { addBook, updateBook, deleteBook, adjustStock, addCategory, addLanguage } = booksSlice.actions;
+export const {
+  addBook,
+  updateBook,
+  deleteBook,
+  adjustStock,
+  addCategory,
+  updateCategory,
+  addLanguage,
+  removeCategory,
+  removeLanguage,
+} = booksSlice.actions;
 export default booksSlice.reducer;

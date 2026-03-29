@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useMemo, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { updateBook, deleteBook, addCategory, addLanguage } from "../../redux/booksSlice";
 import {
@@ -11,13 +11,9 @@ import {
   Calendar,
   Save,
   Trash2,
-  X,
   ChevronRight,
   Filter,
   CheckCircle,
-  AlertCircle,
-  Clock,
-  ExternalLink,
   Plus,
   Loader2,
   Sparkles,
@@ -34,7 +30,7 @@ const EditBook = () => {
   const availableCategories = useSelector((state) => state.books.categories);
   const availableLanguages = useSelector((state) => state.books.languages);
 
-  const [selectedBook, setSelectedBook] = useState(null);
+  const [selectedBookId, setSelectedBookId] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [form, setForm] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -42,16 +38,10 @@ const EditBook = () => {
   const [dropdowns, setDropdowns] = useState({ category: false, language: false });
   const [searchTerms, setSearchTerms] = useState({ category: "", language: "" });
 
-  // Sync internal selectedBook with Redux state if it updates (e.g. from Inventory tab)
-  useEffect(() => {
-    if (selectedBook) {
-      const updated = allBooks.find(b => b.id === selectedBook.id);
-      if (updated) {
-        setSelectedBook(updated);
-        setForm(updated);
-      }
-    }
-  }, [allBooks]);
+  const selectedBook = useMemo(
+    () => allBooks.find((book) => book.id === selectedBookId) || null,
+    [allBooks, selectedBookId]
+  );
 
   const filteredBooks = allBooks.filter(
     (book) =>
@@ -61,7 +51,7 @@ const EditBook = () => {
   );
 
   const handleBookSelect = (book) => {
-    setSelectedBook(book);
+    setSelectedBookId(book.id);
     setForm(book);
     setShowStatus(null);
   };
@@ -102,7 +92,7 @@ const EditBook = () => {
   const handleDelete = () => {
     if (window.confirm("Are you sure you want to remove this volume from the registry?")) {
       dispatch(deleteBook(selectedBook.id));
-      setSelectedBook(null);
+      setSelectedBookId(null);
       setForm(null);
     }
   };
@@ -273,62 +263,61 @@ const EditBook = () => {
                   <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2">
                     Classification Genre
                   </label>
-                  <div className="relative">
-                    <div
-                      onClick={() =>
-                        setDropdowns((p) => ({ ...p, category: !p.category }))
-                      }
-                      className="flex items-center gap-3 w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm cursor-pointer hover:border-slate-300 transition-all"
-                    >
-                      <Layers className="w-4 h-4 text-cyan-600" />
-                      <span className="text-slate-800 font-medium">
+                    <div className="relative">
+                      <div
+                        onClick={() =>
+                          setDropdowns((p) => ({ ...p, category: !p.category }))
+                        }
+                        className="flex items-center gap-3 w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm cursor-pointer hover:border-slate-300 transition-all font-bold text-slate-800"
+                      >
+                        <Layers className="w-4 h-4 text-cyan-600" />
                         {form.category}
-                      </span>
-                    </div>
-
-                    {dropdowns.category && (
-                      <div className="absolute top-full left-0 w-full mt-2 bg-white border border-slate-200 rounded-3xl shadow-2xl z-50 p-2 animate-fadeIn">
-                        <input
-                          type="text"
-                          placeholder="Override current genre..."
-                          className="w-full p-3 bg-slate-50 border-none rounded-2xl text-sm outline-none mb-2"
-                          value={searchTerms.category}
-                          onChange={(e) =>
-                            setSearchTerms((p) => ({ ...p, category: e.target.value }))
-                          }
-                          autoFocus
-                        />
-                        <div className="max-h-48 overflow-y-auto no-scrollbar">
-                          {availableCategories
-                            .filter((c) =>
-                              c.toLowerCase().includes(searchTerms.category.toLowerCase())
-                            )
-                            .map((cat) => (
-                              <div
-                                key={cat}
-                                onClick={() => handleSelectOption("category", cat)}
-                                className="px-4 py-2.5 hover:bg-slate-50 rounded-xl cursor-pointer text-sm font-medium text-slate-600 transition-colors"
-                              >
-                                {cat}
-                              </div>
-                            ))}
-                          {searchTerms.category &&
-                            !availableCategories.some(
-                              (c) => c.toLowerCase() === searchTerms.category.toLowerCase()
-                            ) && (
-                              <div
-                                onClick={() => handleAddNewOption("category")}
-                                className="px-4 py-2.5 bg-cyan-50 text-cyan-700 rounded-xl cursor-pointer text-sm font-bold flex items-center justify-between"
-                              >
-                                Add "{searchTerms.category}"
-                                <Plus className="w-4 h-4" />
-                              </div>
-                            )}
-                        </div>
                       </div>
-                    )}
+
+                      {dropdowns.category && (
+                        <div className="absolute top-full left-0 w-full mt-2 bg-white border border-slate-200 rounded-3xl shadow-2xl z-50 p-2 animate-fadeIn">
+                          <input
+                            type="text"
+                            placeholder="Override current genre..."
+                            className="w-full p-3 bg-slate-50 border-none rounded-2xl text-sm outline-none mb-2"
+                            value={searchTerms.category}
+                            onChange={(e) =>
+                              setSearchTerms((p) => ({ ...p, category: e.target.value }))
+                            }
+                            autoFocus
+                          />
+                          <div className="max-h-48 overflow-y-auto no-scrollbar">
+                            {availableCategories
+                              .filter((c) =>
+                                c.name.toLowerCase().includes(searchTerms.category.toLowerCase())
+                              )
+                              .map((cat) => (
+                                <div
+                                  key={cat.name}
+                                  onClick={() => handleSelectOption("category", cat.name)}
+                                  className="px-4 py-2.5 hover:bg-slate-50 rounded-xl cursor-pointer text-sm font-medium text-slate-800 transition-colors flex items-center gap-2"
+                                >
+                                  <img src={cat.icon} alt="" className="w-5 h-5 object-contain opacity-70" />
+                                  {cat.name}
+                                </div>
+                              ))}
+                            {searchTerms.category &&
+                              !availableCategories.some(
+                                (c) => c.name.toLowerCase() === searchTerms.category.toLowerCase()
+                              ) && (
+                                <div
+                                  onClick={() => handleAddNewOption("category")}
+                                  className="px-4 py-2.5 bg-cyan-50 text-cyan-700 rounded-xl cursor-pointer text-sm font-bold flex items-center justify-between"
+                                >
+                                  Add "{searchTerms.category}"
+                                  <Plus className="w-4 h-4" />
+                                </div>
+                              )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
 
                 {/* Language Searchable+Creatable Select */}
                 <div className="space-y-3 relative">

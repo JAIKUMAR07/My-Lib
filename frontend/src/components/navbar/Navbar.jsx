@@ -1,4 +1,4 @@
-import { Menu, X, ChevronDown, User, Settings, BookOpen, UserPlus, ShoppingCart, Search } from "lucide-react";
+import { Menu, X, ChevronDown, User, Settings, BookOpen, UserPlus, ShoppingCart } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { useSelector } from "react-redux";
@@ -7,6 +7,9 @@ const Navbar = () => {
   const cartItems = useSelector((state) => state.cart || []);
   const [isOpen, setIsOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
+  const [activeRole, setActiveRole] = useState(
+    () => localStorage.getItem("nexlib_role") || "guest"
+  );
   const mgmtRef = useRef(null);
   const profileRef = useRef(null);
 
@@ -21,6 +24,18 @@ const Navbar = () => {
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    const syncRole = () => {
+      setActiveRole(localStorage.getItem("nexlib_role") || "guest");
+    };
+    window.addEventListener("storage", syncRole);
+    window.addEventListener("nexlib-role-change", syncRole);
+    return () => {
+      window.removeEventListener("storage", syncRole);
+      window.removeEventListener("nexlib-role-change", syncRole);
+    };
   }, []);
 
   const managementLinks = [
@@ -44,6 +59,12 @@ const Navbar = () => {
 
   const toggleDropdown = (name) => {
     setActiveDropdown(activeDropdown === name ? null : name);
+  };
+
+  const handleRoleChange = (nextRole) => {
+    setActiveRole(nextRole);
+    localStorage.setItem("nexlib_role", nextRole);
+    window.dispatchEvent(new Event("nexlib-role-change"));
   };
 
   return (
@@ -97,6 +118,20 @@ const Navbar = () => {
 
           {/* Right Action Area */}
           <div className="flex items-center gap-3">
+            <div className="hidden md:block">
+              <select
+                value={activeRole}
+                onChange={(e) => handleRoleChange(e.target.value)}
+                className="rounded-xl border border-white/30 bg-white/10 px-3 py-2 text-xs font-bold uppercase tracking-widest text-white outline-none backdrop-blur-md"
+                title="Frontend access role"
+              >
+                <option value="guest" className="text-slate-900">Guest</option>
+                <option value="student" className="text-slate-900">Student</option>
+                <option value="librarian" className="text-slate-900">Librarian</option>
+                <option value="admin" className="text-slate-900">Admin</option>
+              </select>
+            </div>
+
             <Link 
               to="/cartpage" 
               className="relative p-2 rounded-xl bg-white/10 text-white hover:bg-white/20 transition-all border border-white/10"
@@ -172,6 +207,21 @@ const Navbar = () => {
                   <User className="w-4 h-4" /> {link.label}
                 </NavLink>
               ))}
+
+              <div className="h-px bg-white/10 my-2 sm:col-span-2"></div>
+              <div className="px-4 sm:col-span-2">
+                <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-white/50">Access Role</p>
+                <select
+                  value={activeRole}
+                  onChange={(e) => handleRoleChange(e.target.value)}
+                  className="w-full rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-xs font-bold uppercase tracking-widest text-white outline-none"
+                >
+                  <option value="guest" className="text-slate-900">Guest</option>
+                  <option value="student" className="text-slate-900">Student</option>
+                  <option value="librarian" className="text-slate-900">Librarian</option>
+                  <option value="admin" className="text-slate-900">Admin</option>
+                </select>
+              </div>
             </div>
           </div>
         )}

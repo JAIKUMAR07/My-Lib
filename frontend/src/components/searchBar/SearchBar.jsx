@@ -1,15 +1,14 @@
-import { useContext, useState } from "react";
-import myContext from "../../context/myContext";
+import { useState } from "react";
 import { Search, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 
 const SearchBar = () => {
-  const context = useContext(myContext);
-  const { getAllProduct } = context;
+  const books = useSelector((state) => state.books.items);
   const [search, setSearch] = useState("");
   const normalizedSearch = search.trim().toLowerCase();
 
-  const filterSearchData = getAllProduct
+  const filterSearchData = books
     .filter((obj) => obj.title.toLowerCase().includes(normalizedSearch))
     .slice(0, 8);
 
@@ -54,7 +53,7 @@ const SearchBar = () => {
                 >
                   <img
                     className="h-12 w-10 rounded-lg object-cover"
-                    src={item.productImageUrl}
+                    src={item.image || item.productImageUrl}
                     alt={item.title}
                   />
                   <div className="min-w-0">

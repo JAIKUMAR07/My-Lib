@@ -1,7 +1,5 @@
 import { useNavigate, useParams } from "react-router-dom";
 import Layout from "../../components/layout/Layout";
-import { useContext } from "react";
-import myContext from "../../context/myContext";
 import Loader from "../../components/loader/Loader";
 import { useDispatch, useSelector } from "react-redux";
 import { addToCart, deleteFromCart } from "../../redux/cartSlice";
@@ -9,20 +7,22 @@ import toast from "react-hot-toast";
 
 const CategoryPage = () => {
   const { categoryname } = useParams();
-
-  const context = useContext(myContext);
-  const { loading, getAllProduct } = context;
+  const books = useSelector((state) => state.books.items);
+  const loading = useSelector((state) => state.books.loading);
 
   const navigate = useNavigate();
+  const normalizedCategory = decodeURIComponent(categoryname || "")
+    .toLowerCase()
+    .trim();
 
   // Filter product
-  const filterProduct = getAllProduct.filter(
+  const filterProduct = books.filter(
     (product) =>
       product.category.toLowerCase().trim() ===
-      categoryname.toLowerCase().trim()
+      normalizedCategory
   );
 
-  const cartItems = useSelector((state) => state.cart);
+  const cartItems = useSelector((state) => state.cart || []);
   const dispatch = useDispatch();
 
   const addCart = (item) => {
@@ -40,7 +40,7 @@ const CategoryPage = () => {
       <div className="page-shell px-4 md:px-6">
         <div className="page-section mt-2 rounded-[2rem] px-4 py-8 md:px-8">
           <h1 className="mb-3 text-center text-3xl font-semibold capitalize text-slate-900">
-            {categoryname}
+            {decodeURIComponent(categoryname || "")}
           </h1>
           <p className="mb-8 text-center text-slate-600">
             Filtered collection for this category.
@@ -56,18 +56,18 @@ const CategoryPage = () => {
                 <div className="flex flex-wrap justify-center">
                   {filterProduct.length > 0 ? (
                     <>
-                      {filterProduct.slice(0, 8).map((item, index) => {
-                        const { id, title, description, productImageUrl } = item;
+                      {filterProduct.slice(0, 12).map((item) => {
+                        const { id, title, description } = item;
                         return (
                           <div
-                            key={index}
+                            key={id}
                             className="w-full p-3 sm:w-1/2 lg:w-1/3 xl:w-1/4"
                           >
                             <div className="soft-card h-full overflow-hidden rounded-3xl cursor-pointer transition duration-300 hover:-translate-y-1">
                               <img
                                 onClick={() => navigate(`/productinfo/${id}`)}
                                 className="h-64 w-full object-cover lg:h-56"
-                                src={productImageUrl}
+                                src={item.image || item.productImageUrl}
                                 alt={title}
                               />
                               <div className="p-6">
@@ -75,7 +75,7 @@ const CategoryPage = () => {
                                   Nex-Lib
                                 </h2>
                                 <h1 className="mb-3 text-lg font-semibold text-slate-900">
-                                  {title.substring(0, 25)}
+                                  {title.substring(0, 45)}
                                 </h1>
                                 <p className="mb-4 text-sm leading-6 text-slate-600">
                                   {description.substring(0, 80)}

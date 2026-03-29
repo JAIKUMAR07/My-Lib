@@ -1,142 +1,111 @@
-import { useContext } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
-import myContext from "../../context/myContext";
-import Loader from "../loader/Loader";
+import { deleteBook } from "../../redux/booksSlice";
 import toast from "react-hot-toast";
+import { Edit3, Trash2, PlusCircle, Book as BookIcon } from "lucide-react";
 
 const ProductDetail = () => {
-  const context = useContext(myContext);
-  const {
-    loading,
-    setLoading,
-    getAllProduct,
-    deleteProduct: deleteProductContext,
-  } = context;
-  // console.log(getAllProduct)
-
-  // navigate
+  const dispatch = useDispatch();
+  const books = useSelector((state) => state.books.items);
   const navigate = useNavigate();
 
-  // Delete product
-  const deleteProduct = async (id) => {
-    setLoading(true);
-    try {
-      deleteProductContext(id);
-      toast.success("Book Deleted successfully");
-      setLoading(false);
-    } catch (error) {
-      console.log(error);
-      setLoading(false);
-      toast.error("Book Deletion Failed");
-    }
+  const handleDelete = (id) => {
+    dispatch(deleteBook(id));
+    toast.success("Catalog entry purged successfully.");
   };
+
   return (
-    <div>
-      <div className="py-5 flex justify-between items-center">
-        {/* text  */}
-        <h1 className=" text-xl text-purple-700 font-bold">All Books</h1>
-        {/* Add Product Button  */}
-        <Link to={"/addproduct"}>
-          <button className="px-5 py-2 font-bold bg-green-400 hover:bg-green-500 border  rounded-lg text-white">
-            Add Books
+    <div className="animate-fadeIn">
+      <div className="py-8 flex flex-col md:flex-row justify-between items-center bg-white px-8 rounded-t-[2.5rem] border-b border-slate-50 gap-4">
+        <div>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tighter">Global Knowledge Repository</h1>
+          <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Catalog & Inventory Management</p>
+        </div>
+        
+        <Link to={"/bookmanagement"}>
+          <button className="group px-8 py-3.5 bg-slate-900 text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-2xl flex items-center gap-2 hover:scale-105 transition-all shadow-xl shadow-slate-300">
+            <PlusCircle className="w-4 h-4" />
+            Add New Resource
           </button>
         </Link>
       </div>
 
-      {/* Loading  */}
-      <div className="flex justify-center relative top-20">
-        {loading && <Loader />}
-      </div>
-
-      {/* table  */}
-      <div className="w-full overflow-x-auto mb-5">
-        <table className="w-full text-left border border-collapse sm:border-separate border-pink-100 text-pink-400">
-          <tbody>
-            <tr>
-              <th
-                scope="col"
-                className="h-12 px-6 text-md border-l first:border-l-0 border-pink-100 text-slate-700 bg-slate-100 font-bold fontPara"
-              >
-                S.No.
-              </th>
-              <th
-                scope="col"
-                className="h-12 px-6 text-md border-l first:border-l-0 border-pink-100 text-slate-700 bg-slate-100 font-bold fontPara"
-              >
-                Image
-              </th>
-              <th
-                scope="col"
-                className="h-12 px-6 text-md font-bold fontPara border-l first:border-l-0 border-pink-100 text-slate-700 bg-slate-100"
-              >
-                Title
-              </th>
-
-              <th
-                scope="col"
-                className="h-12 px-6 text-md font-bold fontPara border-l first:border-l-0 border-pink-100 text-slate-700 bg-slate-100"
-              >
-                Category
-              </th>
-              <th
-                scope="col"
-                className="h-12 px-6 text-md font-bold fontPara border-l first:border-l-0 border-pink-100 text-slate-700 bg-slate-100"
-              >
-                {" "}
-                Date
-              </th>
-              <th
-                scope="col"
-                className="h-12 px-6 text-md font-bold fontPara border-l first:border-l-0 border-pink-100 text-slate-700 bg-slate-100"
-              >
-                Action
-              </th>
-              <th
-                scope="col"
-                className="h-12 px-6 text-md font-bold fontPara border-l first:border-l-0 border-pink-100 text-slate-700 bg-slate-100"
-              >
-                Action
-              </th>
+      <div className="w-full overflow-x-auto bg-white rounded-b-[2.5rem] shadow-2xl shadow-slate-200/40">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="bg-slate-50/50">
+              <th className="py-7 px-8 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Index</th>
+              <th className="py-7 px-8 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Visual Meta</th>
+              <th className="py-7 px-8 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Bibliographic Info</th>
+              <th className="py-7 px-8 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Classification</th>
+              <th className="py-7 px-8 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Availability</th>
+              <th className="py-7 px-8 text-right text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Operations</th>
             </tr>
-            {getAllProduct.map((item, index) => {
-              const { id, title, category, date, productImageUrl } = item;
-              return (
-                <tr key={index} className="text-pink-300">
-                  <td className="h-12 px-6 text-md transition duration-300 border-t border-l first:border-l-0 border-pink-100 stroke-slate-500 text-slate-500 ">
-                    {index + 1}.
-                  </td>
-                  <td className="h-12 px-6 text-md transition duration-300 border-t border-l first:border-l-0 border-pink-100 stroke-slate-500 text-slate-500 first-letter:uppercase ">
-                    <div className="flex justify-center">
-                      <img className="w-20 " src={productImageUrl} alt="" />
-                    </div>
-                  </td>
-                  <td className="h-12 px-6 text-md transition duration-300 border-t border-l first:border-l-0 border-pink-100 stroke-slate-500 text-slate-500 first-letter:uppercase ">
-                    {title}
-                  </td>
-
-                  <td className="h-12 px-6 text-md transition duration-300 border-t border-l first:border-l-0 border-pink-100 stroke-slate-500 text-slate-500 first-letter:uppercase ">
-                    {category}
-                  </td>
-                  <td className="h-12 px-6 text-md transition duration-300 border-t border-l first:border-l-0 border-pink-100 stroke-slate-500 text-slate-500 first-letter:uppercase ">
-                    {date}
-                  </td>
-                  <td
-                    onClick={() => navigate(`/updateproduct/${id}`)}
-                    className="h-12 px-6 text-md transition duration-300 border-t border-l first:border-l-0 border-pink-100 stroke-slate-500  text-green-500 cursor-pointer "
-                  >
-                    Edit
-                  </td>
-                  <td
-                    onClick={() => deleteProduct(id)}
-                    className="h-12 px-6 text-md transition duration-300 border-t border-l first:border-l-0 border-pink-100 stroke-slate-500  text-red-500 font-bold cursor-pointer "
-                  >
-                    Delete
-                  </td>
-                </tr>
-              );
-            })}
+          </thead>
+          <tbody className="divide-y divide-slate-50 fontPara">
+            {books.map((item, index) => (
+              <tr key={item.id} className="hover:bg-slate-50/50 transition-colors group">
+                <td className="px-8 py-6 font-mono text-xs font-bold text-slate-400">
+                  {String(index + 1).padStart(2, '0')}
+                </td>
+                <td className="px-8 py-6">
+                   <div className="w-16 h-20 bg-slate-100 rounded-lg overflow-hidden shadow-sm border border-slate-200">
+                      {item.productImageUrl ? (
+                        <img src={item.productImageUrl} className="w-full h-full object-cover" alt="" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-slate-300">
+                           <BookIcon className="w-6 h-6" />
+                        </div>
+                      )}
+                   </div>
+                </td>
+                <td className="px-8 py-6">
+                   <div className="flex flex-col">
+                      <span className="text-sm font-black text-slate-900 group-hover:text-blue-600 transition-colors cursor-pointer">{item.title}</span>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{item.author || "Global Source"}</span>
+                   </div>
+                </td>
+                <td className="px-8 py-6">
+                   <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-md text-[9px] font-black uppercase tracking-widest">
+                     {item.category}
+                   </span>
+                </td>
+                <td className="px-8 py-6">
+                   <div className="flex items-center gap-2">
+                      <div className={`w-1.5 h-1.5 rounded-full ${item.available_copies > 0 ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                      <span className="text-xs font-bold text-slate-600">{item.available_copies} Units</span>
+                   </div>
+                </td>
+                <td className="px-8 py-6 text-right">
+                   <div className="flex items-center justify-end gap-3 translate-x-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 transition-all">
+                      <button 
+                        onClick={() => navigate(`/bookmanagement`)}
+                        className="p-2 text-slate-400 hover:text-blue-600 transition-colors bg-white rounded-xl shadow-sm border border-slate-100"
+                      >
+                         <Edit3 className="w-4 h-4" />
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(item.id)}
+                        className="p-2 text-slate-400 hover:text-rose-600 transition-colors bg-white rounded-xl shadow-sm border border-slate-100"
+                      >
+                         <Trash2 className="w-4 h-4" />
+                      </button>
+                   </div>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
+        
+        {books.length === 0 && (
+           <div className="py-40 text-center">
+              <div className="inline-flex p-8 bg-slate-50 rounded-[2rem] mb-6">
+                 <BookIcon className="w-12 h-12 text-slate-200" />
+              </div>
+              <h3 className="text-2xl font-black text-slate-900 mb-2">Registry Vacant</h3>
+              <p className="text-slate-400 font-medium max-w-xs mx-auto">The knowledge repository is currently empty. Synchronize new resources for system access.</p>
+           </div>
+        )}
       </div>
     </div>
   );

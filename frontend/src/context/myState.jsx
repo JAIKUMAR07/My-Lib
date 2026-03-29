@@ -14,8 +14,13 @@ function MyState({ children }) {
 
   // Helper to load data from localStorage
   const loadData = (key) => {
-    const data = localStorage.getItem(key);
-    return data ? JSON.parse(data) : [];
+    try {
+      const data = localStorage.getItem(key);
+      const parsed = data ? JSON.parse(data) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
   };
 
   const [loading, setLoading] = useState(false);

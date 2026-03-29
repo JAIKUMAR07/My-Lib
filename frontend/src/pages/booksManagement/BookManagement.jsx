@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import AddBook from "../../components/booksManagement/AddBook";
 import BookInventory from "../../components/booksManagement/BookInventory";
 import EditBook from "../../components/booksManagement/EditBook";
+import CatalogSettings from "../../components/booksManagement/CatalogSettings";
 import {
   Book,
   Plus,
@@ -11,25 +12,30 @@ import {
   Download,
   BookOpen,
   TrendingUp,
+  Settings,
 } from "lucide-react";
+import { useSelector } from "react-redux";
 
 const BookManagement = () => {
   const [activeTab, setActiveTab] = useState("inventory");
+  const books = useSelector((state) => state.books.items || []);
+  const categories = useSelector((state) => state.books.categories || []);
 
-  // Define stats outside or use useMemo if it were derived from props/state and complex,
-  // but for a static object like this, re-creation on render is negligible.
-  const stats = {
-    totalBooks: 12450,
-    availableCopies: 9876,
-    borrowedCopies: 2543,
-    categories: 28,
-  };
+  const stats = useMemo(
+    () => ({
+      totalBooks: books.reduce((sum, book) => sum + book.total_copies, 0),
+      availableCopies: books.reduce((sum, book) => sum + book.available_copies, 0),
+      borrowedCopies: books.reduce((sum, book) => sum + (book.borrowed_copies || 0), 0),
+      categories: categories.length,
+    }),
+    [books, categories.length]
+  );
 
   return (
     <div className="page-shell px-4 md:px-6">
       <div className="page-section rounded-[2rem] p-4 md:p-6">
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-6">
+          <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-2">
                 <Book className="w-8 h-8 text-cyan-700" />
@@ -102,7 +108,7 @@ const BookManagement = () => {
         {/* Tabs Navigation */}
         <div className="bg-white rounded-xl shadow mb-6">
           <div className="border-b border-gray-200">
-            <nav className="flex flex-wrap -mb-px">
+            <nav className="flex -mb-px flex-wrap overflow-x-auto">
               <button
                 className={`flex items-center gap-2 py-4 px-6 font-medium text-sm border-b-2 transition ${
                   activeTab === "inventory"
@@ -136,6 +142,17 @@ const BookManagement = () => {
                 <Edit className="w-4 h-4" />
                 Edit Book Details
               </button>
+              <button
+                className={`flex items-center gap-2 py-4 px-6 font-medium text-sm border-b-2 transition ${
+                  activeTab === "catalog"
+                    ? "border-cyan-600 text-cyan-700"
+                    : "border-transparent text-gray-500 hover:text-gray-700"
+                }`}
+                onClick={() => setActiveTab("catalog")}
+              >
+                <Settings className="w-4 h-4" />
+                Catalog Settings
+              </button>
             </nav>
           </div>
 
@@ -144,6 +161,7 @@ const BookManagement = () => {
             {activeTab === "inventory" && <BookInventory />}
             {activeTab === "add" && <AddBook />}
             {activeTab === "edit" && <EditBook />}
+            {activeTab === "catalog" && <CatalogSettings />}
           </div>
         </div>
       </div>

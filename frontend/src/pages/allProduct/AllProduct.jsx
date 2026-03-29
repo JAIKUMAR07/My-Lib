@@ -28,8 +28,9 @@ const AllProduct = () => {
   const dispatch = useDispatch();
   
   // Fetch books and categories from global Redux state
+  // Fetch books and categories from global Redux state
   const books = useSelector((state) => state.books.items);
-  const categories = useSelector((state) => ["All", ...state.books.categories]);
+  const categories = useSelector((state) => ["All", ...state.books.categories.map(c => c.name)]);
   const cartItems = useSelector((state) => state.cart || []);
   const loading = useSelector((state) => state.books.loading);
 
