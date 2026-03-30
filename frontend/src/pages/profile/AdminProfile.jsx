@@ -1,16 +1,22 @@
+import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import EditProfileModal from "../../components/profile/EditProfileModal";
 import { 
   Shield, Zap, Crown, Mail, Phone, Award, MapPin, Calendar, 
   ShieldCheck, LayoutDashboard, Database, BarChart3, Users, 
   Bell, UserCheck, Settings, LogOut, ChevronRight, BookOpen,
-  Activity, Globe, Terminal
+  Activity, Globe, Terminal, Edit
 } from "lucide-react";
 
 const AdminProfile = () => {
+  const { profileData, updateProfile, signOut } = useAuth();
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  
   const books = useSelector((state) => state.books.items);
   const users = useSelector((state) => state.users.items);
-  const issues = useSelector((state) => state.issues.items);
+  const issues = useSelector((state) => state.issues.items || []);
 
   const stats = [
     { label: "Registry Volumes", value: books.length, icon: BookOpen, style: "bg-cyan-600 shadow-cyan-900/20", trend: "+12% Growth" },
@@ -19,18 +25,18 @@ const AdminProfile = () => {
   ];
 
   const adminData = {
-    fullName: "System Administrator",
+    fullName: profileData?.fullName || "System Administrator",
     roleType: "Root Authority",
-    email: "admin@nexlib.io",
-    phone: "+1 (800) NEX-ADMIN",
-    adminId: "ARCH-001-X",
-    address: "Central Command Center, Sector 7G",
+    email: profileData?.email || "admin@nexlib.io",
+    phone: profileData?.phone || "+1 (800) NEX-ADMIN",
+    adminId: profileData?.libId || "ARCH-001-X",
+    address: profileData?.department || "Central Command Center",
     joinDate: "Level 1 Clearance",
     activeStaff: users.filter(u => u.role === 'librarian' || u.role === 'admin').length
   };
 
   return (
-    <div className="overflow-hidden rounded-[2.5rem] border border-slate-200 bg-white shadow-2xl animate-fadeIn">
+    <div className="overflow-hidden rounded-4xl border border-slate-200 bg-white shadow-2xl animate-fadeIn">
       <div className="relative h-64 md:h-72">
         <div className="absolute inset-0 bg-slate-900">
           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20" />
@@ -39,7 +45,7 @@ const AdminProfile = () => {
         <div className="absolute -bottom-20 left-6 flex items-end gap-6 md:left-12 md:gap-8">
           <div className="relative">
             <div className="h-32 w-32 rounded-3xl bg-white p-2 shadow-2xl shadow-slate-900/40 md:h-44 md:w-44">
-              <div className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-slate-800 to-slate-950">
+              <div className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-2xl bg-linear-to-br from-slate-800 to-slate-950">
                 <Shield className="relative z-10 h-16 w-16 text-cyan-400 drop-shadow-lg md:h-20 md:w-20" />
               </div>
             </div>
@@ -57,7 +63,7 @@ const AdminProfile = () => {
         <div className="space-y-10 lg:col-span-8">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 md:gap-6">
             {stats.map((stat) => (
-              <div key={stat.label} className="group rounded-[2rem] border border-slate-100 bg-slate-50 p-6 transition-all hover:border-cyan-200 hover:bg-white hover:shadow-2xl hover:shadow-cyan-900/5">
+              <div key={stat.label} className="group rounded-4xl border border-slate-100 bg-slate-50 p-6 transition-all hover:border-cyan-200 hover:bg-white hover:shadow-2xl hover:shadow-cyan-900/5">
                 <div className={`mb-4 flex h-12 w-12 items-center justify-center rounded-2xl shadow-lg transition-transform group-hover:scale-110 ${stat.style}`}>
                   <stat.icon className="h-6 w-6 text-white" />
                 </div>
@@ -86,7 +92,7 @@ const AdminProfile = () => {
               </div>
             </div>
           </div>
-          <div className="relative overflow-hidden rounded-[2.5rem] bg-slate-900 p-8 md:p-12">
+          <div className="relative overflow-hidden rounded-4xl bg-slate-900 p-8 md:p-12">
             <h3 className="mb-10 flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.4em] text-cyan-500"><LayoutDashboard className="h-5 w-5" /> Pulse Sync</h3>
             <div className="grid grid-cols-2 gap-8 lg:grid-cols-4">
               <Metric icon={Database} value={books.length} label="Resource Units" />
@@ -97,23 +103,31 @@ const AdminProfile = () => {
           </div>
         </div>
         <div className="space-y-8 lg:col-span-4">
-          <div className="sticky top-8 rounded-[2.5rem] border border-slate-100 bg-slate-50 p-6 md:p-10">
+          <div className="sticky top-8 rounded-4xl border border-slate-100 bg-slate-50 p-6 md:p-10 shadow-xl">
             <h3 className="mb-8 text-[10px] font-black uppercase tracking-widest text-slate-400">Authority Controls</h3>
             <div className="space-y-4">
               <ControlButton icon={Users} to="/registration" label="Personnel Registry" count={`${users.length} IDs`} color="cyan" />
               <ControlButton icon={BookOpen} to="/bookmanagement" label="Volumes Catalog" count={`${books.length} Units`} color="indigo" />
               <ControlButton icon={BarChart3} to="/borrowermanagement" label="Circulation Audit" count="Live" color="emerald" />
+              <ControlButton icon={Settings} to="/catalogsettings" label="Catalog Architecture" count="Structural" color="slate" />
             </div>
             <div className="my-10 h-px bg-slate-200" />
             <div className="space-y-3">
-              <ActionButton icon={Bell} label="Broadcast Global Sync" plain />
+              <ActionButton icon={Edit} label="Modify Identity Matrix" onClick={() => setIsEditModalOpen(true)} />
               <Link to="/registration" className="block w-full text-left"><ActionButton icon={UserCheck} label="Deploy New Personnel" primary /></Link>
-              <ActionButton icon={Settings} label="Core Configuration" plain />
-              <ActionButton icon={LogOut} label="Terminate Session" danger />
+              <ActionButton icon={Bell} label="Broadcast Global Sync" plain />
+              <ActionButton icon={LogOut} label="Terminate Session" danger onClick={signOut} />
             </div>
           </div>
         </div>
       </div>
+
+      <EditProfileModal 
+        isOpen={isEditModalOpen} 
+        onClose={() => setIsEditModalOpen(false)} 
+        currentData={profileData} 
+        onUpdate={updateProfile}
+      />
     </div>
   );
 };
@@ -148,8 +162,15 @@ const ControlButton = ({ icon: Icon, label, count, color, to }) => (
   </Link>
 );
 
-const ActionButton = ({ icon: Icon, label, primary, danger, plain }) => (
-  <button className={`flex w-full items-center gap-3 rounded-2xl px-6 py-4 text-[10px] font-black uppercase tracking-widest transition-all ${primary ? "bg-slate-900 text-white shadow-xl shadow-slate-950/20 hover:scale-[1.02] active:scale-95 px-8" : danger ? "border border-rose-100 bg-rose-50 text-rose-600 hover:bg-rose-500 hover:text-white" : "border border-slate-200 bg-white text-slate-400 hover:border-slate-400 hover:text-slate-800"}`}><Icon className="h-4 w-4" /><span className="flex-1 text-left">{label}</span>{!plain && !primary && <ChevronRight className="ml-auto h-3 w-3 opacity-30" />}</button>
+const ActionButton = ({ icon: Icon, label, primary, danger, plain, onClick }) => (
+  <button 
+    onClick={onClick}
+    className={`flex w-full items-center gap-3 rounded-2xl px-6 py-4 text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${primary ? "bg-slate-900 text-white shadow-xl shadow-slate-950/20 hover:scale-[1.02] active:scale-95 px-8" : danger ? "border border-rose-100 bg-rose-50 text-rose-600 hover:bg-rose-500 hover:text-white" : "border border-slate-200 bg-white text-slate-400 hover:border-slate-400 hover:text-slate-800"}`}
+  >
+    <Icon className="h-4 w-4" />
+    <span className="flex-1 text-left">{label}</span>
+    {!plain && !primary && <ChevronRight className="ml-auto h-3 w-3 opacity-30" />}
+  </button>
 );
 
 export default AdminProfile;

@@ -2,13 +2,16 @@ const express = require("express");
 const cors = require("cors");
 
 // Import Routes
+const authRoutes = require("./routes/auth");
+const settingsRoutes = require("./routes/settings");
+const booksRoutes = require("./routes/books");
 
 const app = express();
 
 // Middleware
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    origin: process.env.FRONTEND_URL || "http://localhost:5173",
     credentials: true,
   })
 );
@@ -27,6 +30,9 @@ app.get("/", (req, res) => {
 // for when you start building your book and borrowing API routes.
 
 // API Routes
+app.use("/api/auth", authRoutes);
+app.use("/api/settings", settingsRoutes);
+app.use("/api/books", booksRoutes);
 
 // 404 Handler
 app.use((req, res) => {

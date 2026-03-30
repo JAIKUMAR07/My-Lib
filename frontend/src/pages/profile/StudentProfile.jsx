@@ -1,19 +1,23 @@
+import React, { useState } from "react";
 import { useSelector } from "react-redux";
+import { useAuth } from "../../context/AuthContext";
 import { 
   User, Mail, Phone, MapPin, GraduationCap, School, Clock, 
   Book, Bookmark, CreditCard, Edit3, LogOut, ArrowRight, 
-  Award, Zap, CheckCircle
+  Award, Zap, Settings, Edit
 } from "lucide-react";
+import EditProfileModal from "../../components/profile/EditProfileModal";
 
 /**
  * StudentProfile Component
  * Synchronized with Redux for live academic data and personal resource tracking.
  */
 const StudentProfile = () => {
+  const { profileData, updateProfile, signOut } = useAuth();
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const issues = useSelector((state) => state.issues.items || []);
   const users = useSelector((state) => state.users.items || []);
   
-  // For demo, we assume the first student in the registry is 'logged in' 
   // if no specific identifier exists.
   const activeStudent = users.find(u => u.role === "student") || {
     fullName: "Identity Not Initialized",
@@ -115,16 +119,29 @@ const StudentProfile = () => {
             </div>
             <div className="my-12 h-px bg-slate-200/60" />
             <div className="space-y-4">
-              <button className="group flex w-full items-center justify-center gap-3 rounded-2xl bg-slate-900 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-white shadow-2xl shadow-slate-400 hover:bg-slate-800 transition-all active:scale-95">
-                <Edit3 className="h-4 w-4" />Modify Identity<ArrowRight className="h-4 w-4 opacity-40 group-hover:translate-x-1" />
+              <button 
+                onClick={() => setIsEditModalOpen(true)}
+                className="group flex w-full items-center justify-center gap-3 rounded-2xl bg-slate-900 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-white shadow-2xl shadow-slate-400 hover:bg-slate-800 transition-all active:scale-95 cursor-pointer"
+              >
+                <Edit className="h-4 w-4" />Modify Identity<ArrowRight className="h-4 w-4 opacity-40 group-hover:translate-x-1" />
               </button>
-              <button className="flex w-full items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-600 hover:bg-slate-50 transition-all">
+              <button 
+                onClick={signOut}
+                className="flex w-full items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-600 hover:bg-slate-50 transition-all cursor-pointer"
+              >
                 <LogOut className="h-4 w-4" />Terminate Session
               </button>
             </div>
           </div>
         </div>
       </div>
+
+      <EditProfileModal 
+        isOpen={isEditModalOpen} 
+        onClose={() => setIsEditModalOpen(false)} 
+        currentData={profileData} 
+        onUpdate={updateProfile}
+      />
     </div>
   );
 };

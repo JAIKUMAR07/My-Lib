@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import Layout from "../../components/layout/Layout";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Loader from "../../components/loader/Loader";
 import { useDispatch, useSelector } from "react-redux";
 import { addToCart, deleteFromCart } from "../../redux/cartSlice";
@@ -27,16 +27,34 @@ const AllProduct = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   
-  // Fetch books and categories from global Redux state
-  // Fetch books and categories from global Redux state
+  // Stable selectors — never create new objects/arrays inside useSelector
   const books = useSelector((state) => state.books.items);
-  const categories = useSelector((state) => ["All", ...state.books.categories.map(c => c.name)]);
-  const cartItems = useSelector((state) => state.cart || []);
+  const rawCategories = useSelector((state) => state.books.categories);
+  const cartItems = useSelector((state) => state.cart);
   const loading = useSelector((state) => state.books.loading);
 
   const [searchKey, setSearchKey] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
-  const [viewMode, setViewMode] = useState("grid"); // grid or list
+  const [viewMode, setViewMode] = useState("grid");
+
+  // Derived values via useMemo — only recomputes when source data changes
+  const categories = useMemo(
+    () => ["All", ...rawCategories.map((c) => (typeof c === "string" ? c : c.name))],
+    [rawCategories]
+  );
+
+  const filteredProducts = useMemo(
+    () =>
+      (books || []).filter((item) => {
+        const matchesSearch =
+          item.title?.toLowerCase().includes(searchKey.toLowerCase()) ||
+          item.author?.toLowerCase().includes(searchKey.toLowerCase());
+        const matchesCategory =
+          activeCategory === "All" || item.category === activeCategory;
+        return matchesSearch && matchesCategory;
+      }),
+    [books, searchKey, activeCategory]
+  );
 
   const addCart = (item) => {
     dispatch(addToCart(item));
@@ -58,12 +76,8 @@ const AllProduct = () => {
     toast.error("Removed from collection");
   };
 
-  const filteredProducts = books.filter((item) => {
-    const matchesSearch = item.title.toLowerCase().includes(searchKey.toLowerCase()) || 
-                         item.author.toLowerCase().includes(searchKey.toLowerCase());
-    const matchesCategory = activeCategory === "All" || item.category === activeCategory;
-    return matchesSearch && matchesCategory;
-  });
+
+
 
   return (
     <Layout>

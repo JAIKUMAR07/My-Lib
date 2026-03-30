@@ -1,26 +1,33 @@
-import { useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
-import { addCategory, updateCategory, addLanguage, removeCategory, removeLanguage } from "../../redux/booksSlice";
-import { Layers, Languages, Plus, Trash2, BookOpen, Edit2 } from "lucide-react";
+import { Layers, Languages, Plus, Trash2, Globe, Loader2, RefreshCcw, Pencil } from "lucide-react";
+import { apiService } from "../../services/api";
+import { setCategories, setLanguages } from "../../redux/booksSlice";
 
 const normalize = (value = "") => value.trim().toLowerCase();
+const DEFAULT_ICON = "https://img.icons8.com/isometric/512/add-folder.png";
 
 const CatalogSettings = () => {
   const dispatch = useDispatch();
-  const categories = useSelector((state) => state.books.categories || []);
-  const languages = useSelector((state) => state.books.languages || []);
   const books = useSelector((state) => state.books.items || []);
 
+  const [categories, setCategoryRows] = useState([]);
+  const [languages, setLanguageRows] = useState([]);
   const [newCategory, setNewCategory] = useState("");
-  const [newCategoryIcon, setNewCategoryIcon] = useState("");
-  const [editingCategory, setEditingCategory] = useState(null); // { name, icon }
+  const [newCategoryLink, setNewCategoryLink] = useState("");
   const [newLanguage, setNewLanguage] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [savingCategory, setSavingCategory] = useState(false);
+  const [savingLanguage, setSavingLanguage] = useState(false);
+  const [editingCategoryId, setEditingCategoryId] = useState(null);
+  const [editingCategoryLink, setEditingCategoryLink] = useState("");
+  const [updatingCategoryId, setUpdatingCategoryId] = useState(null);
 
   const categoryUsage = useMemo(() => {
     const usage = {};
     books.forEach((book) => {
-      const key = normalize(book.category);
+      const key = normalize(book.category || "");
       usage[key] = (usage[key] || 0) + 1;
     });
     return usage;
@@ -35,61 +42,179 @@ const CatalogSettings = () => {
     return usage;
   }, [books]);
 
-  const handleAddCategory = () => {
+  const loadCatalog = async (withSpinner = true) => {
+    if (withSpinner) setLoading(true);
+    try {
+      const [catRes, langRes] = await Promise.all([
+        apiService.getCategories(),
+        apiService.getLanguages(),
+      ]);
+
+      if (catRes.success) {
+        setCategoryRows(catRes.data || []);
+        dispatch(setCategories(catRes.data || []));
+      }
+
+      if (langRes.success) {
+        setLanguageRows(langRes.data || []);
+        dispatch(setLanguages(langRes.data || []));
+      }
+    } catch (err) {
+      toast.error(`Failed to sync catalog: ${err.message}`);
+    } finally {
+      if (withSpinner) setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadCatalog();
+
+    const intervalId = setInterval(() => {
+      loadCatalog(false);
+    }, 30000);
+
+    return () => clearInterval(intervalId);
+  }, []);
+
+  const handleAddCategory = async () => {
     const name = newCategory.trim();
-    const icon = newCategoryIcon.trim();
-    if (!name) return;
-    const alreadyExists = categories.some((item) => normalize(item.name) === normalize(name));
-    if (alreadyExists) {
+    const link = newCategoryLink.trim();
+
+    if (!name) {
+      toast.error("Category name is required.");
+      return;
+    }
+
+    const exists = categories.some((item) => normalize(item.name) === normalize(name));
+    if (exists) {
       toast.error("Category already exists.");
       return;
     }
-    dispatch(addCategory({ name, icon }));
-    setNewCategory("");
-    setNewCategoryIcon("");
-    toast.success("Category added.");
+
+    setSavingCategory(true);
+    try {
+      const res = await apiService.addCategory(name, link || null);
+      if (!res.success) throw new Error(res.error || "Save failed");
+
+      setNewCategory("");
+      setNewCategoryLink("");
+      await loadCatalog(false);
+      toast.success("Category saved to Supabase.");
+    } catch (err) {
+      toast.error(`Category save failed: ${err.message}`);
+    } finally {
+      setSavingCategory(false);
+    }
   };
 
-  const handleUpdateCategoryIcon = () => {
-    if (!editingCategory) return;
-    dispatch(updateCategory(editingCategory));
-    setEditingCategory(null);
-    toast.success("Category icon updated.");
+  const openCategoryEditor = (category) => {
+    setEditingCategoryId(category.id);
+    setEditingCategoryLink(category.link || "");
   };
 
-  const handleAddLanguage = () => {
-    const value = newLanguage.trim();
-    if (!value) return;
-    const alreadyExists = languages.some((item) => normalize(item) === normalize(value));
-    if (alreadyExists) {
+  const handleUpdateCategoryLink = async () => {
+    if (!editingCategoryId) return;
+
+    setUpdatingCategoryId(editingCategoryId);
+    try {
+      const res = await apiService.updateCategoryLink(editingCategoryId, editingCategoryLink.trim());
+      if (!res.success) throw new Error(res.error || "Update failed");
+
+      setEditingCategoryId(null);
+      setEditingCategoryLink("");
+      await loadCatalog(false);
+      toast.success("Category icon link updated.");
+    } catch (err) {
+      toast.error(`Update failed: ${err.message}`);
+    } finally {
+      setUpdatingCategoryId(null);
+    }
+  };
+
+  const handleAddLanguage = async () => {
+    const name = newLanguage.trim();
+
+    if (!name) {
+      toast.error("Language name is required.");
+      return;
+    }
+
+    const exists = languages.some((item) => normalize(item.name) === normalize(name));
+    if (exists) {
       toast.error("Language already exists.");
       return;
     }
-    dispatch(addLanguage(value));
-    setNewLanguage("");
-    toast.success("Language added.");
+
+    setSavingLanguage(true);
+    try {
+      const res = await apiService.addLanguage(name);
+      if (!res.success) throw new Error(res.error || "Save failed");
+
+      setNewLanguage("");
+      await loadCatalog(false);
+      toast.success("Language saved to Supabase.");
+    } catch (err) {
+      toast.error(`Language save failed: ${err.message}`);
+    } finally {
+      setSavingLanguage(false);
+    }
   };
 
-  const handleRemoveCategory = (catName) => {
-    if ((categoryUsage[normalize(catName)] || 0) > 0) {
+  const handleRemoveCategory = async (category) => {
+    const usage = categoryUsage[normalize(category.name)] || 0;
+    if (usage > 0) {
       toast.error("Cannot delete category used by books.");
       return;
     }
-    dispatch(removeCategory(catName));
-    toast.success("Category removed.");
+
+    if (!window.confirm(`Delete category \"${category.name}\"?`)) return;
+
+    try {
+      await apiService.deleteCategory(category.id);
+      await loadCatalog(false);
+      toast.success("Category removed.");
+    } catch (err) {
+      toast.error(`Delete failed: ${err.message}`);
+    }
   };
 
-  const handleRemoveLanguage = (language) => {
-    if ((languageUsage[normalize(language)] || 0) > 0) {
+  const handleRemoveLanguage = async (language) => {
+    const usage = languageUsage[normalize(language.name)] || 0;
+    if (usage > 0) {
       toast.error("Cannot delete language used by books.");
       return;
     }
-    dispatch(removeLanguage(language));
-    toast.success("Language removed.");
+
+    if (!window.confirm(`Delete language \"${language.name}\"?`)) return;
+
+    try {
+      await apiService.deleteLanguage(language.id);
+      await loadCatalog(false);
+      toast.success("Language removed.");
+    } catch (err) {
+      toast.error(`Delete failed: ${err.message}`);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[420px] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-slate-300" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 animate-fadeIn">
+      <div className="flex justify-end">
+        <button
+          onClick={() => loadCatalog()}
+          className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-black uppercase tracking-widest text-slate-600 transition hover:border-cyan-300 hover:text-cyan-700"
+        >
+          <RefreshCcw className="h-4 w-4" /> Refresh
+        </button>
+      </div>
+
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="mb-5 flex items-center gap-3">
@@ -100,81 +225,83 @@ const CatalogSettings = () => {
           </div>
 
           <div className="mb-5 space-y-3">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <input
-                value={newCategory}
-                onChange={(e) => setNewCategory(e.target.value)}
-                placeholder="Category name..."
-                className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none transition-all focus:border-cyan-400"
-              />
-              <input
-                value={newCategoryIcon}
-                onChange={(e) => setNewCategoryIcon(e.target.value)}
-                placeholder="Icon URL (Optional)"
-                className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none transition-all focus:border-cyan-400"
-              />
-            </div>
+            <input
+              value={newCategory}
+              onChange={(e) => setNewCategory(e.target.value)}
+              placeholder="Category name"
+              className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none transition-all focus:border-cyan-400"
+            />
+            <input
+              value={newCategoryLink}
+              onChange={(e) => setNewCategoryLink(e.target.value)}
+              placeholder="Icon link (optional)"
+              className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none transition-all focus:border-cyan-400"
+            />
             <button
               onClick={handleAddCategory}
-              className="w-full flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-5 py-4 text-xs font-black uppercase tracking-widest text-white transition-all hover:bg-slate-800"
+              disabled={savingCategory}
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-5 py-4 text-xs font-black uppercase tracking-widest text-white transition-all hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <Plus className="h-4 w-4" /> Finalize Registry
+              {savingCategory ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />} Add Category
             </button>
           </div>
 
           <div className="space-y-2">
             {categories.map((category) => {
               const usage = categoryUsage[normalize(category.name)] || 0;
-              const isEditing = editingCategory?.name === category.name;
-
+              const isEditing = editingCategoryId === category.id;
               return (
-                <div key={category.name} className="flex flex-col gap-2 rounded-2xl border border-slate-100 bg-slate-50 p-3">
-                   <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-white border border-slate-100 p-1 flex items-center justify-center">
-                          <img src={isEditing ? editingCategory.icon : category.icon} alt="" className="w-8 h-8 object-contain" onError={(e) => e.target.src="https://img.icons8.com/isometric/512/add-folder.png"} />
-                        </div>
-                        <div>
-                          <p className="text-sm font-bold text-slate-800">{category.name}</p>
-                          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                            Used by {usage} book{usage === 1 ? "" : "s"}
-                          </p>
-                        </div>
+                <div key={category.id} className="rounded-2xl border border-slate-100 bg-slate-50 p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={category.link || DEFAULT_ICON}
+                        alt={category.name}
+                        className="h-10 w-10 rounded-xl border border-slate-100 bg-white object-cover p-1"
+                        onError={(e) => { e.currentTarget.src = DEFAULT_ICON; }}
+                      />
+                      <div>
+                        <p className="text-sm font-bold text-slate-800">{category.name}</p>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                          Used by {usage} book{usage === 1 ? "" : "s"}
+                        </p>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => setEditingCategory(isEditing ? null : { ...category })}
-                          className={`p-2 rounded-xl transition-all ${isEditing ? 'bg-cyan-600 text-white' : 'bg-white text-slate-400 hover:text-cyan-600 border border-slate-100'}`}
-                        >
-                          <Plus className={`h-4 w-4 transform transition-transform ${isEditing ? 'rotate-45' : ''}`} />
-                        </button>
-                        <button
-                          onClick={() => handleRemoveCategory(category.name)}
-                          className="rounded-xl border border-rose-200 bg-rose-50 p-2 text-rose-600 transition-all hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-40"
-                          disabled={usage > 0}
-                          title={usage > 0 ? "Used by books" : "Delete"}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                   </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => openCategoryEditor(category)}
+                        className="rounded-xl border border-slate-200 bg-white p-2 text-slate-600 transition-all hover:text-cyan-700"
+                        title="Edit icon link"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => handleRemoveCategory(category)}
+                        disabled={usage > 0}
+                        className="rounded-xl border border-rose-200 bg-rose-50 p-2 text-rose-600 transition-all hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
 
-                   {isEditing && (
-                     <div className="flex gap-2 animate-fadeIn">
-                       <input
-                        value={editingCategory.icon}
-                        onChange={(e) => setEditingCategory({...editingCategory, icon: e.target.value})}
-                        placeholder="New Icon URL..."
-                        className="flex-1 bg-white rounded-xl border border-slate-200 px-3 py-2 text-[10px] outline-none focus:border-cyan-400 font-mono"
-                       />
-                       <button 
-                        onClick={handleUpdateCategoryIcon}
-                        className="px-4 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800"
-                       >
-                        Save
-                       </button>
-                     </div>
-                   )}
+                  {isEditing && (
+                    <div className="mt-3 flex items-center gap-2">
+                      <input
+                        value={editingCategoryLink}
+                        onChange={(e) => setEditingCategoryLink(e.target.value)}
+                        placeholder="Category icon link"
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs outline-none focus:border-cyan-400"
+                      />
+                      <button
+                        onClick={handleUpdateCategoryLink}
+                        disabled={updatingCategoryId === category.id}
+                        className="rounded-xl bg-slate-900 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white disabled:opacity-60"
+                      >
+                        {updatingCategoryId === category.id ? "Updating" : "Update"}
+                      </button>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -189,37 +316,42 @@ const CatalogSettings = () => {
             <h3 className="text-lg font-black text-slate-900">Language Management</h3>
           </div>
 
-          <div className="mb-5 flex flex-col gap-3 sm:flex-row">
+          <div className="mb-5 space-y-3">
             <input
               value={newLanguage}
               onChange={(e) => setNewLanguage(e.target.value)}
-              placeholder="Add new language"
+              placeholder="Language name"
               className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none transition-all focus:border-cyan-400"
             />
             <button
               onClick={handleAddLanguage}
-              className="flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-5 py-3 text-xs font-black uppercase tracking-widest text-white transition-all hover:bg-slate-800"
+              disabled={savingLanguage}
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-5 py-4 text-xs font-black uppercase tracking-widest text-white transition-all hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <Plus className="h-4 w-4" /> Add
+              {savingLanguage ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />} Add Language
             </button>
           </div>
 
           <div className="space-y-2">
             {languages.map((language) => {
-              const usage = languageUsage[normalize(language)] || 0;
+              const usage = languageUsage[normalize(language.name)] || 0;
               return (
-                <div key={language} className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50 p-3">
-                  <div>
-                    <p className="text-sm font-bold text-slate-800">{language}</p>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                      Used by {usage} book{usage === 1 ? "" : "s"}
-                    </p>
+                <div key={language.id} className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50 p-3">
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-xl border border-slate-100 bg-white p-2 text-blue-700">
+                      <Globe className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-slate-800">{language.name}</p>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                        Used by {usage} book{usage === 1 ? "" : "s"}
+                      </p>
+                    </div>
                   </div>
                   <button
                     onClick={() => handleRemoveLanguage(language)}
-                    className="rounded-xl border border-rose-200 bg-rose-50 p-2 text-rose-600 transition-all hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-40"
                     disabled={usage > 0}
-                    title={usage > 0 ? "Used by books" : "Delete"}
+                    className="rounded-xl border border-rose-200 bg-rose-50 p-2 text-rose-600 transition-all hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -229,18 +361,6 @@ const CatalogSettings = () => {
           </div>
         </section>
       </div>
-
-      <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="mb-3 flex items-center gap-3">
-          <div className="rounded-xl bg-emerald-100 p-2 text-emerald-700">
-            <BookOpen className="h-5 w-5" />
-          </div>
-          <h3 className="text-lg font-black text-slate-900">Catalog Tips</h3>
-        </div>
-        <p className="text-sm text-slate-600">
-          Keep category names short and consistent, and only remove categories/languages that are not currently assigned to books.
-        </p>
-      </section>
     </div>
   );
 };

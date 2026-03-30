@@ -1,17 +1,10 @@
 import React, { useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { addUser, deleteUser, sendInvite } from "../../redux/usersSlice";
-import {
-  UserPlus,
-  Mail,
-  User,
-  Shield,
-  CheckCircle,
-  Users,
-  Search,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import { UserPlus, Mail, User, Shield, CheckCircle, Users, Search, ChevronLeft, ChevronRight, Building } from "lucide-react";
+import { apiService } from "../../services/api";
+
+// ... [Registration Component Imports remain the same]
 
 // Import sub-components
 import {
@@ -81,29 +74,30 @@ const Registration = () => {
       return;
     }
 
-    if (registeredUsers.some(u => u.email.toLowerCase() === normalizedEmail)) {
-      showToast("Identity already exists in registry.", "error");
+    try {
+      // 1. Call real Backend Admin API
+      const response = await apiService.post('/api/auth/admin-register', {
+        email: normalizedEmail,
+        password: temporaryPassword,
+        fullName: newUser.fullName.trim(),
+        role: newUser.role,
+        department: "General" // Default for admin-created users
+      });
+
+      if (!response.success) throw new Error(response.error);
+
+      // 2. Synchronize Redux State
+      dispatch(addUser(response.user));
+      showToast(`Identity ${normalizedEmail} successfully enrolled in registry.`);
+
+      // 3. Reset Form
+      setNewUser({ email: "", role: "student", fullName: "" });
+    } catch (error) {
+      console.error('Registration error:', error);
+      showToast(error.message || "Failed to finalize enrollment.", "error");
+    } finally {
       setIsSubmitting(false);
-      return;
     }
-
-    // Artificial latency for premium feel
-    await new Promise((resolve) => setTimeout(resolve, 600));
-
-    const payload = {
-      email: normalizedEmail,
-      role: newUser.role,
-      fullName: newUser.fullName.trim(),
-      name: newUser.fullName.trim() || normalizedEmail.split('@')[0],
-      status: "pending",
-      libId: `LIB-${Math.floor(Math.random() * 9000) + 1000}`,
-    };
-
-    dispatch(addUser(payload));
-    showToast(`Account successfully reserved for ${normalizedEmail}.`);
-
-    setNewUser({ email: "", role: "student", fullName: "" });
-    setIsSubmitting(false);
   };
 
   const sendInvitation = (userId) => {

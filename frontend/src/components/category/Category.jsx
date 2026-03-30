@@ -91,7 +91,7 @@ const Category = () => {
                 className={`w-14 h-14 md:w-20 md:h-20 rounded-3xl ${colorPool[index % colorPool.length].split(" ")[0]} flex items-center justify-center mb-4 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6`}
               >
                 <img
-                  src={category.icon || iconPool[index % iconPool.length]}
+                  src={category.icon || category.link || iconPool[index % iconPool.length]}
                   alt={category.name}
                   className="w-8 h-8 md:w-12 md:h-12 drop-shadow-md object-contain"
                   onError={(e) => {

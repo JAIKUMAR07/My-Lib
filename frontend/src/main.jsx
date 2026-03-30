@@ -15,10 +15,14 @@ store.subscribe(() => {
   localStorage.setItem("issues", JSON.stringify(state.issues));
 });
 
+import { AuthProvider } from "./context/AuthContext";
+
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <Provider store={store}>
-      <App />
+      <AuthProvider>
+        <App />
+      </AuthProvider>
     </Provider>
   </React.StrictMode>
 );

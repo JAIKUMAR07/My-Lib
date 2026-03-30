@@ -1,9 +1,14 @@
-import React from "react";
+import React, { useCallback, useEffect } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
+import { useDispatch } from "react-redux";
+import { apiService } from "./services/api";
+import { setCategories, setLanguages } from "./redux/booksSlice";
 
 // Import Pages
 import Homepage from "./pages/home/Homepage";
+import Login from "./pages/user/Login";
+import Signup from "./pages/user/Signup";
 import NoPage from "./pages/noPage/NoPage";
 import ProductInfo from "./pages/productInfo/ProductInfo";
 import ScrollTop from "./components/scrolltop/ScrollTop";
@@ -17,6 +22,7 @@ import StudentProfile from "./pages/profile/StudentProfile";
 import LibrarianProfile from "./pages/profile/LibrarianProfile";
 import AdminProfile from "./pages/profile/AdminProfile";
 import Registration from "./components/registration/Registration";
+import CatalogSettings from "./pages/settings/CatalogSettings";
 import Layout from "./components/layout/Layout";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
@@ -28,12 +34,47 @@ const protect = (allowedRoles, element) => (
   <ProtectedRoute allowedRoles={allowedRoles}>{element}</ProtectedRoute>
 );
 
+const MetadataSync = () => {
+  const dispatch = useDispatch();
+
+  const syncMetadata = useCallback(async () => {
+    try {
+      const [cats, langs] = await Promise.all([
+        apiService.getCategories(),
+        apiService.getLanguages()
+      ]);
+
+      if (cats.success) dispatch(setCategories(cats.data));
+      if (langs.success) dispatch(setLanguages(langs.data));
+    } catch (err) {
+      console.warn("System metadata sync delayed - retry scheduled.");
+    }
+  }, [dispatch]);
+
+  useEffect(() => {
+    syncMetadata();
+
+    const intervalId = setInterval(syncMetadata, 30000);
+    window.addEventListener("focus", syncMetadata);
+
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener("focus", syncMetadata);
+    };
+  }, [syncMetadata]);
+
+  return null;
+};
+
 const App = () => {
   return (
     <Router>
       <ScrollTop />
+      <MetadataSync />
       <Routes>
         <Route path="/" element={<Homepage />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
         <Route path="/productinfo/:id" element={<ProductInfo />} />
         <Route path="/cartpage" element={<CartPage />} />
         <Route path="/allproduct" element={<AllProduct />} />
@@ -91,6 +132,13 @@ const App = () => {
           element={protect(
             ["librarian", "admin"],
             renderWithLayout(<BorrowerManagement />, "px-0")
+          )}
+        />
+        <Route
+          path="/catalogsettings"
+          element={protect(
+            ["librarian", "admin"],
+            renderWithLayout(<CatalogSettings />, "px-0")
           )}
         />
         <Route

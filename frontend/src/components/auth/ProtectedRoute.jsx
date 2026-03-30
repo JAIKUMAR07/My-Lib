@@ -1,19 +1,21 @@
 import { Navigate, useLocation } from "react-router-dom";
-
-const getUserRole = () => {
-  try {
-    return localStorage.getItem("nexlib_role") || "guest";
-  } catch {
-    return "guest";
-  }
-};
+import { useAuth } from "../../context/AuthContext";
+import Loader from "../loader/Loader";
 
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
+  const { userRole, loading, isAuthenticated } = useAuth();
   const location = useLocation();
-  const role = getUserRole();
 
-  if (!allowedRoles.includes(role)) {
-    return <Navigate to="/" replace state={{ from: location.pathname }} />;
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center"><Loader /></div>;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  }
+
+  if (allowedRoles.length > 0 && !allowedRoles.includes(userRole)) {
+    return <Navigate to="/" replace />;
   }
 
   return children;

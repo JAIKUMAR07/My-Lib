@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { addBook, addCategory, addLanguage } from "../../redux/booksSlice";
+import { setCategories, setLanguages, addBook } from "../../redux/booksSlice";
+import { apiService } from "../../services/api";
+import toast from "react-hot-toast";
 import {
   BookOpen,
   User,
@@ -44,8 +46,14 @@ const AddBook = () => {
 
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [dropdowns, setDropdowns] = useState({ category: false, language: false });
-  const [searchTerms, setSearchTerms] = useState({ category: "", language: "" });
+  const [dropdowns, setDropdowns] = useState({
+    category: false,
+    language: false,
+  });
+  const [searchTerms, setSearchTerms] = useState({
+    category: "",
+    language: "",
+  });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -57,45 +65,82 @@ const AddBook = () => {
     setDropdowns((prev) => ({ ...prev, [field]: false }));
   };
 
-  const handleAddNewOption = (field) => {
+  const handleAddNewOption = async (field) => {
     const value = searchTerms[field].trim();
-    if (value) {
-      if (field === 'category') dispatch(addCategory(value));
-      if (field === 'language') dispatch(addLanguage(value));
-      handleSelectOption(field, value);
+    if (!value) return;
+
+    try {
+      if (field === "category") {
+        const res = await apiService.addCategory(
+          value,
+          null,
+        );
+        if (res.success) {
+          // Sync all categories in Redux to ensure consistency
+          const allCats = await apiService.getCategories();
+          if (allCats.success) dispatch(setCategories(allCats.data));
+          handleSelectOption(field, value);
+          toast.success(`Category "${value}" added to registry.`);
+        }
+      }
+
+      if (field === "language") {
+        const res = await apiService.addLanguage(value);
+        if (res.success) {
+          const allLangs = await apiService.getLanguages();
+          if (allLangs.success) dispatch(setLanguages(allLangs.data));
+          handleSelectOption(field, value);
+          toast.success(`Language "${value}" defined in system.`);
+        }
+      }
       setSearchTerms((prev) => ({ ...prev, [field]: "" }));
+    } catch (err) {
+      toast.error(`Registry Error: ${err.message}`);
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
-    // Simulate sophisticated processing
-    setTimeout(() => {
-      dispatch(addBook({
+    try {
+      const bookData = {
         ...form,
-        image: form.imageUrl || "https://images.unsplash.com/photo-1543005139-85e883804825?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
-      }));
+        imageUrl:
+          form.imageUrl ||
+          "https://images.unsplash.com/photo-1543005139-85e883804825?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
+      };
+
+      const res = await apiService.fetchWithAuth("/api/books", {
+        method: "POST",
+        body: JSON.stringify(bookData),
+      });
+
+      if (res.success) {
+        dispatch(addBook(res.data));
+        setShowSuccess(true);
+        // Reset form
+        setTimeout(() => {
+          setShowSuccess(false);
+          setForm({
+            title: "",
+            author: "",
+            isbn: "",
+            category: "",
+            language: "",
+            total_copies: 1,
+            available_copies: 1,
+            publishDate: "",
+            description: "",
+            imageUrl: "",
+          });
+        }, 3000);
+      }
+    } catch (err) {
+      toast.error(`Registry Error: ${err.message}`);
+    } finally {
       setLoading(false);
-      setShowSuccess(true);
-      // Reset after animation
-      setTimeout(() => {
-        setShowSuccess(false);
-        setForm({
-          title: "",
-          author: "",
-          isbn: "",
-          category: "",
-          language: "",
-          total_copies: 1,
-          available_copies: 1,
-          publishDate: "",
-          description: "",
-          imageUrl: "",
-        });
-      }, 3000);
-    }, 1500);
+    }
   };
 
   return (
@@ -219,7 +264,11 @@ const AddBook = () => {
                     className="flex items-center gap-3 w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl text-sm cursor-pointer hover:border-slate-300 transition-all"
                   >
                     <Layers className="w-4 h-4 text-cyan-600" />
-                    <span className={form.category ? "text-slate-800" : "text-slate-400"}>
+                    <span
+                      className={
+                        form.category ? "text-slate-800" : "text-slate-400"
+                      }
+                    >
                       {form.category || "Select classification..."}
                     </span>
                   </div>
@@ -232,28 +281,41 @@ const AddBook = () => {
                         className="w-full p-3 bg-slate-50 border-none rounded-xl text-sm outline-none mb-2"
                         value={searchTerms.category}
                         onChange={(e) =>
-                          setSearchTerms((p) => ({ ...p, category: e.target.value }))
+                          setSearchTerms((p) => ({
+                            ...p,
+                            category: e.target.value,
+                          }))
                         }
                         autoFocus
                       />
                       <div className="max-h-48 overflow-y-auto no-scrollbar">
                         {availableCategories
                           .filter((c) =>
-                            c.name.toLowerCase().includes(searchTerms.category.toLowerCase())
+                            c.name
+                              .toLowerCase()
+                              .includes(searchTerms.category.toLowerCase()),
                           )
                           .map((cat) => (
                             <div
                               key={cat.name}
-                              onClick={() => handleSelectOption("category", cat.name)}
+                              onClick={() =>
+                                handleSelectOption("category", cat.name)
+                              }
                               className="px-4 py-2.5 hover:bg-slate-50 rounded-xl cursor-pointer text-sm font-medium text-slate-600 transition-colors flex items-center gap-2"
                             >
-                              <img src={cat.icon} alt="" className="w-5 h-5 object-contain opacity-70" />
+                              <img
+                                src={cat.icon || cat.link}
+                                alt=""
+                                className="w-5 h-5 object-contain opacity-70"
+                              />
                               {cat.name}
                             </div>
                           ))}
                         {searchTerms.category &&
                           !availableCategories.some(
-                            (c) => c.name.toLowerCase() === searchTerms.category.toLowerCase()
+                            (c) =>
+                              c.name.toLowerCase() ===
+                              searchTerms.category.toLowerCase(),
                           ) && (
                             <div
                               onClick={() => handleAddNewOption("category")}
@@ -282,7 +344,11 @@ const AddBook = () => {
                     className="flex items-center gap-3 w-full px-5 py-4 bg-white border border-slate-200 rounded-2xl text-sm cursor-pointer hover:border-slate-300 transition-all"
                   >
                     <Globe className="w-4 h-4 text-cyan-600" />
-                    <span className={form.language ? "text-slate-800" : "text-slate-400"}>
+                    <span
+                      className={
+                        form.language ? "text-slate-800" : "text-slate-400"
+                      }
+                    >
                       {form.language || "Select language..."}
                     </span>
                   </div>
@@ -295,19 +361,26 @@ const AddBook = () => {
                         className="w-full p-3 bg-slate-50 border-none rounded-xl text-sm outline-none mb-2"
                         value={searchTerms.language}
                         onChange={(e) =>
-                          setSearchTerms((p) => ({ ...p, language: e.target.value }))
+                          setSearchTerms((p) => ({
+                            ...p,
+                            language: e.target.value,
+                          }))
                         }
                         autoFocus
                       />
                       <div className="max-h-48 overflow-y-auto no-scrollbar">
                         {availableLanguages
                           .filter((l) =>
-                            l.toLowerCase().includes(searchTerms.language.toLowerCase())
+                            l
+                              .toLowerCase()
+                              .includes(searchTerms.language.toLowerCase()),
                           )
                           .map((lang) => (
                             <div
                               key={lang}
-                              onClick={() => handleSelectOption("language", lang)}
+                              onClick={() =>
+                                handleSelectOption("language", lang)
+                              }
                               className="px-4 py-2.5 hover:bg-slate-50 rounded-xl cursor-pointer text-sm font-medium text-slate-600 transition-colors"
                             >
                               {lang}
@@ -315,7 +388,9 @@ const AddBook = () => {
                           ))}
                         {searchTerms.language &&
                           !availableLanguages.some(
-                            (l) => l.toLowerCase() === searchTerms.language.toLowerCase()
+                            (l) =>
+                              l.toLowerCase() ===
+                              searchTerms.language.toLowerCase(),
                           ) && (
                             <div
                               onClick={() => handleAddNewOption("language")}
@@ -399,7 +474,8 @@ const AddBook = () => {
             </div>
             <h3 className="text-2xl font-black text-white">Registry Success</h3>
             <p className="text-slate-400 text-sm font-medium leading-relaxed">
-              Volume has been encoded and synced with the library matrix. Inventory levels updated.
+              Volume has been encoded and synced with the library matrix.
+              Inventory levels updated.
             </p>
             <div className="h-1 bg-cyan-500 rounded-full w-0 animate-progress" />
           </div>
